@@ -59,15 +59,15 @@ git clone https://github.com/yourusername/Chemix-Encyclopedia.git
 
 Go to the project folder:
 
-cd Chemix-Encyclopedia
+`cd Chemix-Encyclopedia`
 
 Install dependencies:
 
-npm install
+`npm install`
 
 Start the project:
 
-npm start
+`npm start`
 
 ---
 
