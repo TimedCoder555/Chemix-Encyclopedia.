@@ -35,31 +35,13 @@ Open:
 
 ```bash
 http://localhost:3000
+
 to view it in the browser.
+
 npm run build
+
 Builds the app for production to the build folder.
+
 npm test
+
 Launches the test runner in interactive watch mode.
-Installation
-Clone the repository:
-Bash
-git clone https://github.com/yourusername/Chemix-Encyclopedia.git
-Go to the project folder:
-Bash
-cd Chemix-Encyclopedia
-Install dependencies:
-Bash
-npm install
-Start the project:
-Bash
-npm start
-Technologies Used
-React JS
-JavaScript
-HTML5
-CSS3
-Node.js
-Notes
-This project is made for educational and learning purposes.
-Owner
-Developed and maintained by timedcoder
