@@ -1,0 +1,19 @@
+# Chemix-Encyclopedia Dependency Configuration
+# Maintained by timedcoder
+
+version: 2
+
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+
+    commit-message:
+      prefix: "Chemix Update"
+
+    labels:
+      - "dependencies"
+      - "security"
+
+    open-pull-requests-limit: 5
