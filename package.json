@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "vite",
-    "dev": "vite",
+    "start": "vite --host 127.0.0.1",
+    "dev": "vite --host 127.0.0.1",
     "build": "vite build",
     "preview": "vite preview"
   },
