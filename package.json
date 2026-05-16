@@ -4,11 +4,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "vite --host 0.0.0.0 --port 8080",
-    "dev": "vite --host 0.0.0.0 --port 8080",
-    "build": "vite build",
-    "preview": "vite preview --host 0.0.0.0 --port 8080"
-  },
+  "start": "HOST=0.0.0.0 react-scripts start",
+  "build": "react-scripts build",
+  "test": "react-scripts test"
+}
   "dependencies": {
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
