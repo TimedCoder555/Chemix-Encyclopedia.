@@ -20,9 +20,21 @@ const Main = () => {
   const [widgetId, setWidgetId] = useState(temp);
   const [compound, setCompound] = useState({});
 
+  const handleSearch = () => {
+    if (!value.trim()) return;
+    
+    // সঠিক উইজেট URL ফরম্যাট
+    const searchUrl = `https://pubchem.ncbi.nlm.nih.gov/compound/${encodeURIComponent(
+      value.trim()
+    )}#section=Structures&embed=true&hide_title=true`;
+    
+    setWidgetId(searchUrl);
+    getAtoms(value, setCompound);
+    chkCompoundName(value, setValidity);
+  };
+
   return (
     <div className="main">
-      
       {/* TOP TITLE */}
       <div
         style={{
@@ -41,7 +53,6 @@ const Main = () => {
         >
           Chemix-Encyclopedia
         </h1>
-
         <p
           style={{
             color: "#cccccc",
@@ -66,34 +77,22 @@ const Main = () => {
       >
         <span className="p-input-icon-left p-card-content searchbar">
           <i className="pi pi-search" />
-
           <InputText
             className="search"
             value={value}
-            onChange={(e) => {
-              setValue(e.target.value);
-
-              temp =
-                "https://pubchem.ncbi.nlm.nih.gov/compound/" +
-                e.target.value +
-                "#section=Structures&embed=true&hide_title=true";
-            }}
+            onChange={(e) => setValue(e.target.value)}
             onKeyPress={(e) => {
               if (e.key === "Enter") {
-                setWidgetId(temp);
-
-                chkCompoundName(value, setValidity);
-                getAtoms(value, setCompound);
+                handleSearch();
               }
             }}
-            placeholder="Search Any Chemical Compound..."
+            placeholder="Search Any Chemical Compound (e.g. Water, Aspirin)..."
             style={{
               background: "#101820",
               color: "white",
               border: "1px solid cyan",
             }}
           />
-
           <Button
             style={{
               marginLeft: "-38px",
@@ -104,12 +103,7 @@ const Main = () => {
             }}
             icon="pi pi-search"
             className="p-button"
-            onClick={() => {
-              setWidgetId(temp);
-
-              getAtoms(value, setCompound);
-              chkCompoundName(value, setValidity);
-            }}
+            onClick={handleSearch}
           />
         </span>
       </div>
@@ -144,12 +138,10 @@ const Main = () => {
                   borderRadius: "15px",
                   background: "#111",
                 }}
-              ></IframeResizer>
-
+              />
               <div style={{ marginTop: "30px" }}>
                 <ColorCodes toShowEls={compound} />
               </div>
-
               <PeriodicTable
                 toShow={compound}
                 compound={value}
@@ -166,67 +158,56 @@ const Main = () => {
 };
 
 let getAtoms = (name, func) => {
-  const url = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURI(
+  const url = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(
     name.trim()
   )}/property/MolecularFormula/JSON`;
 
   fetch(url)
-    .then((resp) => {
-      return resp.json();
-    })
+    .then((resp) => resp.json())
     .then((data) => {
       try {
         return data["PropertyTable"]["Properties"][0]["MolecularFormula"];
-      } catch {}
+      } catch {
+        return null;
+      }
     })
     .then((compound) => {
+      if (!compound) return;
       const atoms = {};
       const regex = /[A-Z][a-z]?/gm;
-
       let m;
-
       while ((m = regex.exec(compound)) !== null) {
         if (m.index === regex.lastIndex) {
           regex.lastIndex++;
         }
-
         for (let i of m) {
           atoms[i] = 0;
         }
       }
-
       console.log("atoms ->", atoms);
-
       func(atoms);
-    });
+    })
+    .catch((err) => console.error("Error fetching atoms:", err));
 };
 
+// এই ফাংশনটি এখন সম্পূর্ণ ফিক্সড এবং সঠিক API ব্যবহার করছে
 let chkCompoundName = (name, setFuncCallback) => {
-  fetch(
-    `https://pubchem.ncbi.nlm.nih.gov/compound/${encodeURIComponent(
-      name
-    )}#section=Structures&embed=true&hide_title=true`
-  )
+  const apiUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(
+    name.trim()
+  )}/description/JSON`;
+
+  fetch(apiUrl)
     .then((resp) => {
-      let status = resp.status;
-
-      console.log(status);
-
-      if ((200 <= status) & (status <= 299)) {
-        console.log(true);
-
+      if (resp.ok) {
         setFuncCallback(true);
-
-        return true;
       } else {
-        console.log(false);
-
         setFuncCallback(false);
-
-        return false;
+        alert("Compound not found! Please check the spelling.");
       }
     })
-    .catch(() => {});
+    .catch(() => {
+      setFuncCallback(false);
+    });
 };
 
 export default Main;
