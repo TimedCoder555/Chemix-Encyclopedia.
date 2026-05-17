@@ -13,7 +13,7 @@
   "dependencies": {
     "@testing-library/react": "^11.2.5",
     "@testing-library/user-event": "^12.8.1",
-    "iframe-resizer-react": "^1.1.0",
+    "iframe-resizer-react": "1.1.0",
     "primeflex": "^2.0.0",
     "primeicons": "^4.1.0",
     "primereact": "^6.0.2",
