@@ -41,4 +41,5 @@ body {
 /* Code Style */
 
 code {
-  font-family: "Courier
+  font-family: "Courier New", Courier, monospace;
+}
