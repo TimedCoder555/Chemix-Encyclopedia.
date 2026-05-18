@@ -1,5 +1,5 @@
 import React from "react";
-import { elements } from "./_color";
+import { elements } from "./_color.json";
 
 import { Chip } from "primereact/chip";
 
