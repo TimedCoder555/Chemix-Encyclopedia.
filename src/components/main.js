@@ -1,40 +1,116 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+
 import "primeicons/primeicons.css";
 import "primereact/resources/primereact.min.css";
-import { Card } from "primereact/card";
-import { Button } from "primereact/button";
-import IframeResizer from "iframe-resizer-react";
 import "primeflex/primeflex.css";
 import "primereact/resources/themes/saga-purple/theme.css";
+
+import { Card } from "primereact/card";
+import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
+
+import IframeResizer from "iframe-resizer-react";
 
 import PeriodicTable from "./PeriodicTable";
 import Intro from "./intro";
 import ColorCodes from "./ColorCodes";
 
-let temp = "";
-
 const Main = () => {
+  // =========================
+  // LOADING SCREEN STATE
+  // =========================
+  const [loading, setLoading] = useState(true);
+
+  // =========================
+  // APP STATES
+  // =========================
   const [validity, setValidity] = useState(false);
   const [value, setValue] = useState("");
-  const [widgetId, setWidgetId] = useState(temp);
+  const [widgetId, setWidgetId] = useState("");
   const [compound, setCompound] = useState({});
 
+  // =========================
+  // LOADING TIMER
+  // =========================
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // =========================
+  // SEARCH FUNCTION
+  // =========================
   const handleSearch = () => {
     if (!value.trim()) return;
-    
-    // সঠিক উইজেট URL ফরম্যাট
+
     const searchUrl = `https://pubchem.ncbi.nlm.nih.gov/compound/${encodeURIComponent(
       value.trim()
     )}#section=Structures&embed=true&hide_title=true`;
-    
+
     setWidgetId(searchUrl);
+
     getAtoms(value, setCompound);
+
     chkCompoundName(value, setValidity);
   };
 
+  // =========================
+  // LOADING SCREEN
+  // =========================
+  if (loading) {
+    return (
+      <div
+        style={{
+          height: "100vh",
+          width: "100%",
+          background: "black",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
+        <h1
+          style={{
+            color: "#00ffe5",
+            fontSize: "2.5rem",
+            textShadow: "0 0 25px #00ffe5",
+            fontFamily: "Arial",
+            marginBottom: "15px",
+          }}
+        >
+          Timecoder Chemix-Encyclopedia
+        </h1>
+
+        <p
+          style={{
+            color: "#aaaaaa",
+            fontSize: "1rem",
+            letterSpacing: "2px",
+          }}
+        >
+          Loading Scientific Experience...
+        </p>
+      </div>
+    );
+  }
+
+  // =========================
+  // MAIN UI
+  // =========================
   return (
-    <div className="main">
+    <div
+      className="main"
+      style={{
+        minHeight: "100vh",
+        background: "#050510",
+        padding: "20px",
+      }}
+    >
       {/* TOP TITLE */}
       <div
         style={{
@@ -53,6 +129,7 @@ const Main = () => {
         >
           Chemix-Encyclopedia
         </h1>
+
         <p
           style={{
             color: "#cccccc",
@@ -77,6 +154,7 @@ const Main = () => {
       >
         <span className="p-input-icon-left p-card-content searchbar">
           <i className="pi pi-search" />
+
           <InputText
             className="search"
             value={value}
@@ -86,13 +164,15 @@ const Main = () => {
                 handleSearch();
               }
             }}
-            placeholder="Search Any Chemical Compound (e.g. Water, Aspirin)..."
+            placeholder="Search Any Chemical Compound..."
             style={{
               background: "#101820",
               color: "white",
               border: "1px solid cyan",
+              width: "100%",
             }}
           />
+
           <Button
             style={{
               marginLeft: "-38px",
@@ -123,6 +203,7 @@ const Main = () => {
         >
           {validity ? (
             <>
+              {/* 3D STRUCTURE */}
               <IframeResizer
                 title="Structures"
                 id="struct"
@@ -139,9 +220,13 @@ const Main = () => {
                   background: "#111",
                 }}
               />
+
+              {/* COLOR CODES */}
               <div style={{ marginTop: "30px" }}>
                 <ColorCodes toShowEls={compound} />
               </div>
+
+              {/* PERIODIC TABLE */}
               <PeriodicTable
                 toShow={compound}
                 compound={value}
@@ -157,6 +242,9 @@ const Main = () => {
   );
 };
 
+// ========================================
+// GET ATOMS
+// ========================================
 let getAtoms = (name, func) => {
   const url = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(
     name.trim()
@@ -173,24 +261,32 @@ let getAtoms = (name, func) => {
     })
     .then((compound) => {
       if (!compound) return;
+
       const atoms = {};
       const regex = /[A-Z][a-z]?/gm;
+
       let m;
+
       while ((m = regex.exec(compound)) !== null) {
         if (m.index === regex.lastIndex) {
           regex.lastIndex++;
         }
+
         for (let i of m) {
           atoms[i] = 0;
         }
       }
+
       console.log("atoms ->", atoms);
+
       func(atoms);
     })
     .catch((err) => console.error("Error fetching atoms:", err));
 };
 
-// এই ফাংশনটি এখন সম্পূর্ণ ফিক্সড এবং সঠিক API ব্যবহার করছে
+// ========================================
+// VALIDATE COMPOUND
+// ========================================
 let chkCompoundName = (name, setFuncCallback) => {
   const apiUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(
     name.trim()
@@ -202,7 +298,8 @@ let chkCompoundName = (name, setFuncCallback) => {
         setFuncCallback(true);
       } else {
         setFuncCallback(false);
-        alert("Compound not found! Please check the spelling.");
+
+        alert("Compound not found! Please check spelling.");
       }
     })
     .catch(() => {
