@@ -1,5 +1,7 @@
 import React from "react";
-import { elements } from "./_color.json";
+import colorData from "../_color.json";
+
+const elements = colorData.elements;
 
 import { Chip } from "primereact/chip";
 
