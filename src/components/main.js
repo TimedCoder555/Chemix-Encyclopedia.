@@ -5,7 +5,7 @@ import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 import IframeResizer from "iframe-resizer-react";
 import "primeflex/primeflex.css";
-import "primereact/resources/themes/lara-dark-purple/theme.css";
+import "primereact/resources/themes/saga-purple/theme.css";
 import { InputText } from "primereact/inputtext";
 
 import PeriodicTable from "./PeriodicTable";
