@@ -12,7 +12,6 @@ import { InputText } from "primereact/inputtext";
 import IframeResizer from "iframe-resizer-react";
 
 import PeriodicTable from "./PeriodicTable";
-import Intro from "./intro";
 import ColorCodes from "./ColorCodes";
 
 const Main = () => {
