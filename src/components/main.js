@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 import "primeicons/primeicons.css";
 import "primereact/resources/primereact.min.css";
@@ -17,28 +17,12 @@ import ColorCodes from "./ColorCodes";
 
 const Main = () => {
   // =========================
-  // LOADING SCREEN STATE
-  // =========================
-  const [loading, setLoading] = useState(true);
-
-  // =========================
-  // APP STATES
+  // STATES
   // =========================
   const [validity, setValidity] = useState(false);
   const [value, setValue] = useState("");
   const [widgetId, setWidgetId] = useState("");
   const [compound, setCompound] = useState({});
-
-  // =========================
-  // LOADING TIMER
-  // =========================
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }, []);
 
   // =========================
   // SEARCH FUNCTION
@@ -56,48 +40,6 @@ const Main = () => {
 
     chkCompoundName(value, setValidity);
   };
-
-  // =========================
-  // LOADING SCREEN
-  // =========================
-  if (loading) {
-    return (
-      <div
-        style={{
-          height: "100vh",
-          width: "100%",
-          background: "black",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          flexDirection: "column",
-          overflow: "hidden",
-        }}
-      >
-        <h1
-          style={{
-            color: "#00ffe5",
-            fontSize: "2.5rem",
-            textShadow: "0 0 25px #00ffe5",
-            fontFamily: "Arial",
-            marginBottom: "15px",
-          }}
-        >
-          Timecoder Chemix-Encyclopedia
-        </h1>
-
-        <p
-          style={{
-            color: "#aaaaaa",
-            fontSize: "1rem",
-            letterSpacing: "2px",
-          }}
-        >
-          Loading Scientific Experience...
-        </p>
-      </div>
-    );
-  }
 
   // =========================
   // MAIN UI
@@ -127,7 +69,7 @@ const Main = () => {
             marginBottom: "10px",
           }}
         >
-          Chemix-Encyclopedia
+          Timecoder Chemix-Encyclopedia
         </h1>
 
         <p
