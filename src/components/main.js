@@ -110,6 +110,7 @@ const Main = () => {
         </h2>
 
         <p style={{ color: "#cbd5e1", lineHeight: "1.8" }}>
+made by TimedCoder555.
 ..   Chemix-Encyclopedia.
           This chemistry web application helps users explore chemical
           compounds, molecular information, and scientific resources.
