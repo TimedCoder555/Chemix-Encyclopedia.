@@ -1,280 +1,139 @@
-@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap");
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
 }
 
-body {
-  background: radial-gradient(circle at top, #0f172a, #020617);
-  font-family: "Orbitron", sans-serif;
-  overflow-x: hidden;
-  color: white;
-  min-height: 100vh;
+body{
+  font-family:Arial, sans-serif;
+  background:#050816;
+  color:white;
 }
 
-/* Scrollbar */
+.app-container{
+  min-height:100vh;
 
-::-webkit-scrollbar {
-  width: 10px;
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+
+  padding-bottom:50px;
 }
 
-::-webkit-scrollbar-track {
-  background: #020617;
+/* NAVBAR */
+
+.navbar{
+  width:100%;
+
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  padding:20px 40px;
+
+  backdrop-filter:blur(6px);
 }
 
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(#00e5ff, #7c4dff);
-  border-radius: 20px;
+.brand{
+  display:flex;
+  align-items:center;
+  gap:15px;
 }
 
-/* Main */
-
-.main {
-  width: 95%;
-  margin: auto;
-  padding-top: 40px;
+.logo{
+  width:70px;
 }
 
-/* Logo */
-
-.logo {
-  display: block;
-  margin: auto;
-  width: 220px;
-  animation: float 4s ease-in-out infinite;
+.brand h1{
+  font-size:28px;
+  color:#00e5ff;
 }
 
-/* App */
-
-.App {
-  text-align: center;
+.brand p{
+  color:#cccccc;
+  font-size:14px;
 }
 
-/* Header */
+.nav-links{
+  display:flex;
+  gap:30px;
 
-.App-header {
-  min-height: 100vh;
-  display: block;
-  padding-top: 20px;
+  list-style:none;
+
+  color:white;
+  font-weight:bold;
 }
 
-/* Title */
-
-.title {
-  font-size: 55px;
-  font-weight: bold;
-  background: linear-gradient(90deg, #00e5ff, #7c4dff, #00ff99);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 15px;
-  animation: glow 2s infinite alternate;
+.nav-links li{
+  cursor:pointer;
+  transition:0.3s;
 }
 
-.subtitle {
-  color: #94a3b8;
-  margin-bottom: 40px;
-  font-size: 18px;
+.nav-links li:hover{
+  color:#00e5ff;
 }
 
-/* Search */
+/* HERO */
 
-.search {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  margin-bottom: 40px;
+.hero{
+  text-align:center;
+
+  padding-top:80px;
+  padding-bottom:60px;
+
+  width:90%;
+  margin:auto;
 }
 
-.searchbar {
-  width: 60%;
-  padding: 15px 20px;
-  border-radius: 50px;
-  border: none;
-  outline: none;
-  font-size: 18px;
-  background: rgba(255,255,255,0.08);
-  color: white;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 0 20px rgba(0,229,255,0.2);
+.hero h2{
+  font-size:60px;
+
+  color:white;
+
+  text-shadow:0 0 20px #00e5ff;
+
+  margin-bottom:20px;
 }
 
-.searchbar::placeholder {
-  color: #94a3b8;
+.hero p{
+  color:#d1d5db;
+
+  font-size:20px;
+
+  max-width:700px;
+
+  margin:auto;
+
+  line-height:1.7;
 }
 
-/* Table */
+/* MAIN */
 
-.wrapper {
-  width: 100%;
-  overflow-x: auto;
+.main-content{
+  width:95%;
+  margin:auto;
 }
 
-#table {
-  display: grid;
-  grid-template-columns: repeat(18, 1fr);
-  gap: 8px;
-  padding: 20px;
-}
+/* MOBILE */
 
-/* Element Box */
+@media(max-width:768px){
 
-.element {
-  width: 70px;
-  height: 70px;
-  border-radius: 15px;
-  padding: 5px;
-  cursor: pointer;
-  position: relative;
-  transition: 0.3s;
-  overflow: hidden;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,0.1);
-}
-
-.element:hover {
-  transform: scale(1.08);
-  box-shadow: 0 0 20px rgba(0,229,255,0.5);
-}
-
-/* Element Text */
-
-.number {
-  font-size: 10px;
-  opacity: 0.7;
-}
-
-.symbol {
-  font-size: 26px;
-  font-weight: bold;
-  text-align: center;
-  margin-top: 5px;
-}
-
-.element-name {
-  font-size: 10px;
-  text-align: center;
-  margin-top: 4px;
-}
-
-/* Categories */
-
-.alkali {
-  background: linear-gradient(135deg, #ff6b6b, #ff8787);
-}
-
-.alkaline {
-  background: linear-gradient(135deg, #ffa94d, #ffc078);
-}
-
-.transition {
-  background: linear-gradient(135deg, #ffd43b, #ffe066);
-  color: black;
-}
-
-.metalloid {
-  background: linear-gradient(135deg, #38d9a9, #63e6be);
-}
-
-.polyatomic {
-  background: linear-gradient(135deg, #4dabf7, #74c0fc);
-}
-
-.diatomic {
-  background: linear-gradient(135deg, #9775fa, #b197fc);
-}
-
-.noble {
-  background: linear-gradient(135deg, #f06595, #faa2c1);
-}
-
-.lanthanide {
-  background: linear-gradient(135deg, #845ef7, #b197fc);
-}
-
-.actinide {
-  background: linear-gradient(135deg, #5c7cfa, #91a7ff);
-}
-
-.post-transition {
-  background: linear-gradient(135deg, #22b8cf, #66d9e8);
-}
-
-.unknown {
-  background: linear-gradient(135deg, #adb5bd, #dee2e6);
-  color: black;
-}
-
-/* Info Box */
-
-#information {
-  margin-top: 30px;
-  padding: 25px;
-  border-radius: 20px;
-  background: rgba(255,255,255,0.05);
-  backdrop-filter: blur(15px);
-  box-shadow: 0 0 30px rgba(0,0,0,0.4);
-}
-
-#information h1 {
-  margin-bottom: 10px;
-}
-
-.atom_info {
-  color: #00e5ff;
-}
-
-/* Floating Animation */
-
-@keyframes float {
-  0% {
-    transform: translateY(0px);
+  .navbar{
+    flex-direction:column;
+    gap:20px;
   }
 
-  50% {
-    transform: translateY(-15px);
+  .nav-links{
+    gap:15px;
+    font-size:14px;
   }
 
-  100% {
-    transform: translateY(0px);
-  }
-}
-
-/* Glow */
-
-@keyframes glow {
-  from {
-    text-shadow: 0 0 10px #00e5ff;
+  .hero h2{
+    font-size:35px;
   }
 
-  to {
-    text-shadow: 0 0 25px #7c4dff;
-  }
-}
-
-/* Mobile */
-
-@media screen and (max-width: 768px) {
-
-  .title {
-    font-size: 35px;
+  .hero p{
+    font-size:16px;
   }
 
-  .searchbar {
-    width: 90%;
-  }
-
-  .element {
-    width: 55px;
-    height: 55px;
-  }
-
-  .symbol {
-    font-size: 18px;
-  }
-
-  .element-name {
-    font-size: 8px;
-  }
 }
