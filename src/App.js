@@ -8,15 +8,16 @@ import Main from "./components/main";
 
 function App() {
   return (
-    <div
-      className="app-container"
-      style={{
-        backgroundImage: `linear-gradient(
-          rgba(5,10,25,0.82),
-          rgba(5,10,25,0.9)
-        ), url(${bgImage})`,
-      }}
-    >
+   <div
+  className="app-container"
+  style={{
+    minHeight: "100vh",
+    backgroundImage: `url(${bgImage})`,
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
+  }}
+> 
       {/* NAVBAR */}
 
       <nav className="navbar">
