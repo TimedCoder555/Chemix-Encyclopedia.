@@ -3,17 +3,44 @@ import React, { useState } from "react";
 const Main = () => {
   const [value, setValue] = useState("");
 
-  const handleSearch = () => {
-    if (!value.trim()) {
-      alert("Please enter a compound name 😄");
-      return;
-    }
+  const handleSearch = async () => {
 
-    window.open(
-      `https://pubchem.ncbi.nlm.nih.gov/#query=${encodeURIComponent(value)}`,
-      "_blank"
+  if (!value.trim()) {
+    alert("Please enter a compound name 😄");
+    return;
+  }
+
+  try {
+
+    const response = await fetch(
+      `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(
+        value
+      )}/property/MolecularFormula,MolecularWeight,IUPACName/JSON`
     );
-  };
+
+    const data = await response.json();
+
+    console.log(data);
+
+    const compound =
+      data.PropertyTable.Properties[0];
+
+    alert(
+      `Compound Found 😎\n\n` +
+      `Name: ${compound.IUPACName}\n` +
+      `Formula: ${compound.MolecularFormula}\n` +
+      `Weight: ${compound.MolecularWeight}`
+    );
+
+  } catch (error) {
+
+    alert("Compound not found 😭");
+
+    console.log(error);
+
+  }
+
+};
 
   return (
     <div
