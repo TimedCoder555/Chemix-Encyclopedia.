@@ -104,37 +104,8 @@ const Main = () => {
       {/* TOP LEFT BRAND */}
       {/* ========================= */}
 
-      <div
-        style={{
-          position: "absolute",
-          top: "20px",
-          left: "20px",
-          textAlign: "left",
-        }}
-      >
-
-        <h2
-          style={{
-            color: "#00ffe5",
-            margin: "0",
-            fontSize: "24px",
-          }}
-        >
-          Chemix-Encyclopedia
-        </h2>
-
-        <p
-          style={{
-            color: "#94a3b8",
-            margin: "0",
-            fontSize: "14px",
-          }}
-        >
-          by TimedCoder555
-        </p>
-
-      </div>
-
+      
+//nothing
       {/* ========================= */}
       {/* MAIN TITLE */}
       {/* ========================= */}
