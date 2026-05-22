@@ -110,6 +110,57 @@ const Main = () => {
         >
           Search
         </button>
+
+{
+  compoundData && (
+
+    <div
+      style={{
+        marginTop: "40px",
+        background: "rgba(0,0,0,0.55)",
+        border: "1px solid #00e5ff",
+        borderRadius: "20px",
+        padding: "30px",
+        maxWidth: "700px",
+        marginLeft: "auto",
+        marginRight: "auto",
+        boxShadow: "0 0 25px rgba(0,229,255,0.3)",
+        backdropFilter: "blur(10px)",
+      }}
+    >
+
+      <h2
+        style={{
+          color: "#00e5ff",
+          marginBottom: "20px",
+        }}
+      >
+        Compound Information
+      </h2>
+
+      <p>
+        <strong>Name:</strong>
+        {" "}
+        {compoundData.IUPACName}
+      </p>
+
+      <p>
+        <strong>Formula:</strong>
+        {" "}
+        {compoundData.MolecularFormula}
+      </p>
+
+      <p>
+        <strong>Molecular Weight:</strong>
+        {" "}
+        {compoundData.MolecularWeight}
+      </p>
+
+    </div>
+
+  )
+}
+
       </div>
 
       {/* INFO CARD */}
