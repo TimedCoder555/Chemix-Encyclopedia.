@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 
+const [compoundData, setCompoundData] = useState(null);
+
 const Main = () => {
   const [value, setValue] = useState("");
 
