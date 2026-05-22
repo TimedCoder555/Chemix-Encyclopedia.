@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import logo from "../img/logo.png";
 
 // =========================
 // CHEMICAL DATA
@@ -114,79 +115,57 @@ const chemicals = [
 ];
 
 // =========================
-// MOLECULE CARD COMPONENT
+// MOLECULE CARD
 // =========================
 
-const MoleculeCard = ({ chem, isActive, isLeft, isRight }) => {
-  const scale = isActive ? 1 : 0.88;
-  const opacity = isActive ? 1 : 0.6;
-  return (
+const MoleculeCard = ({ chem, isActive }) => (
+  <div style={{
+    background: chem.bg,
+    borderRadius: 22,
+    padding: "18px 14px 16px",
+    display: "flex", flexDirection: "column", alignItems: "center",
+    position: "relative", overflow: "hidden",
+    border: `1.5px solid ${chem.color}${isActive ? "66" : "28"}`,
+    boxShadow: isActive
+      ? `0 0 32px ${chem.color}44, 0 8px 28px rgba(0,0,0,0.5)`
+      : "0 4px 14px rgba(0,0,0,0.3)",
+    transform: isActive ? "scale(1)" : "scale(0.88)",
+    opacity: isActive ? 1 : 0.58,
+    transition: "all 0.45s cubic-bezier(0.4,0,0.2,1)",
+    cursor: isActive ? "default" : "pointer",
+    minHeight: 220, userSelect: "none",
+  }}>
     <div style={{
-      background: chem.bg,
-      borderRadius: 24,
-      padding: "20px 16px 18px",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      position: "relative",
-      overflow: "hidden",
-      border: `1.5px solid ${chem.color}${isActive ? "66" : "28"}`,
-      boxShadow: isActive
-        ? `0 0 36px ${chem.color}44, 0 8px 32px rgba(0,0,0,0.5)`
-        : "0 4px 16px rgba(0,0,0,0.3)",
-      transform: `scale(${scale})`,
-      opacity,
-      transition: "all 0.45s cubic-bezier(0.4,0,0.2,1)",
-      cursor: isActive ? "default" : "pointer",
-      minHeight: 230,
-      userSelect: "none",
-    }}>
-      {/* Glow orb */}
-      <div style={{
-        position: "absolute", top: -25, right: -25,
-        width: 100, height: 100, borderRadius: "50%",
-        background: `radial-gradient(circle, ${chem.color}33, transparent 70%)`,
-        pointerEvents: "none",
-      }} />
-
-      {/* SVG Molecule */}
-      <div style={{ width: "100%", height: 118 }}>
-        <svg width="100%" height="100%" viewBox="0 0 100 100" style={{ overflow: "visible" }}>
-          {chem.bonds.map((b, i) => (
-            <line key={i} x1={b.x1} y1={b.y1} x2={b.x2} y2={b.y2}
-              stroke={chem.color} strokeWidth="2.2" strokeOpacity="0.65" strokeLinecap="round" />
-          ))}
-          {chem.atoms.map((a, i) => (
-            <g key={i}>
-              <circle cx={`${a.x}%`} cy={`${a.y}%`} r={a.r}
-                fill={a.color} fillOpacity="0.15"
-                stroke={a.color} strokeWidth="1.6" />
-              <text x={`${a.x}%`} y={`${a.y}%`}
-                textAnchor="middle" dominantBaseline="central"
-                fill={a.color} fontSize={a.r > 20 ? "10" : "8"}
-                fontWeight="700" fontFamily="monospace">
-                {a.symbol}
-              </text>
-            </g>
-          ))}
-        </svg>
-      </div>
-
-      {/* Text Info */}
-      <div style={{ textAlign: "center", marginTop: 6 }}>
-        <div style={{ fontSize: 20, fontWeight: 800, color: "#fff", letterSpacing: 0.4 }}>
-          {chem.formula}
-        </div>
-        <div style={{ fontSize: 13, color: chem.color, fontWeight: 600, marginTop: 2 }}>
-          {chem.name}
-        </div>
-        <div style={{ fontSize: 10.5, color: "#ffffff77", marginTop: 3, lineHeight: 1.4 }}>
-          {chem.description}
-        </div>
-      </div>
+      position: "absolute", top: -22, right: -22,
+      width: 90, height: 90, borderRadius: "50%",
+      background: `radial-gradient(circle, ${chem.color}33, transparent 70%)`,
+      pointerEvents: "none",
+    }} />
+    <div style={{ width: "100%", height: 112 }}>
+      <svg width="100%" height="100%" viewBox="0 0 100 100" style={{ overflow: "visible" }}>
+        {chem.bonds.map((b, i) => (
+          <line key={i} x1={b.x1} y1={b.y1} x2={b.x2} y2={b.y2}
+            stroke={chem.color} strokeWidth="2.2" strokeOpacity="0.65" strokeLinecap="round" />
+        ))}
+        {chem.atoms.map((a, i) => (
+          <g key={i}>
+            <circle cx={`${a.x}%`} cy={`${a.y}%`} r={a.r}
+              fill={a.color} fillOpacity="0.15" stroke={a.color} strokeWidth="1.6" />
+            <text x={`${a.x}%`} y={`${a.y}%`}
+              textAnchor="middle" dominantBaseline="central"
+              fill={a.color} fontSize={a.r > 20 ? "10" : "8"}
+              fontWeight="700" fontFamily="monospace">{a.symbol}</text>
+          </g>
+        ))}
+      </svg>
     </div>
-  );
-};
+    <div style={{ textAlign: "center", marginTop: 4 }}>
+      <div style={{ fontSize: 19, fontWeight: 800, color: "#fff" }}>{chem.formula}</div>
+      <div style={{ fontSize: 12, color: chem.color, fontWeight: 600, marginTop: 2 }}>{chem.name}</div>
+      <div style={{ fontSize: 10, color: "#ffffff66", marginTop: 3, lineHeight: 1.4 }}>{chem.description}</div>
+    </div>
+  </div>
+);
 
 // =========================
 // MAIN COMPONENT
@@ -194,26 +173,16 @@ const MoleculeCard = ({ chem, isActive, isLeft, isRight }) => {
 
 const Main = () => {
 
-  // =========================
-  // STATES
-  // =========================
-
   const [value, setValue] = useState("");
   const [compoundData, setCompoundData] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [current, setCurrent] = useState(0);
-  const [navOpen, setNavOpen] = useState(false);
 
-  // Touch / drag refs
   const touchStartX = useRef(null);
   const touchStartY = useRef(null);
   const timerRef = useRef(null);
   const isDragging = useRef(false);
   const dragStartX = useRef(null);
-
-  // =========================
-  // CAROUSEL LOGIC
-  // =========================
 
   const startTimer = () => {
     clearInterval(timerRef.current);
@@ -232,7 +201,6 @@ const Main = () => {
     startTimer();
   };
 
-  // Touch swipe
   const onTouchStart = (e) => {
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
@@ -247,32 +215,21 @@ const Main = () => {
     touchStartX.current = null;
   };
 
-  // Mouse drag
-  const onMouseDown = (e) => {
-    isDragging.current = false;
-    dragStartX.current = e.clientX;
-  };
+  const onMouseDown = (e) => { isDragging.current = false; dragStartX.current = e.clientX; };
   const onMouseMove = (e) => {
-    if (dragStartX.current !== null && Math.abs(e.clientX - dragStartX.current) > 5) {
+    if (dragStartX.current !== null && Math.abs(e.clientX - dragStartX.current) > 5)
       isDragging.current = true;
-    }
   };
   const onMouseUp = (e) => {
     if (dragStartX.current === null) return;
     const dx = e.clientX - dragStartX.current;
-    if (isDragging.current && Math.abs(dx) > 50) {
-      goTo(dx < 0 ? current + 1 : current - 1);
-    }
+    if (isDragging.current && Math.abs(dx) > 50) goTo(dx < 0 ? current + 1 : current - 1);
     dragStartX.current = null;
     isDragging.current = false;
   };
 
   const prev = (current - 1 + chemicals.length) % chemicals.length;
   const next = (current + 1) % chemicals.length;
-
-  // =========================
-  // SEARCH FUNCTION
-  // =========================
 
   const handleSearch = async () => {
     if (!value.trim()) {
@@ -286,29 +243,15 @@ const Main = () => {
       const response = await fetch(
         `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(value)}/property/MolecularFormula,MolecularWeight,IUPACName/JSON`
       );
-      if (!response.ok) {
-        setCompoundData(null);
-        setErrorMessage("❌ No compound found.");
-        return;
-      }
+      if (!response.ok) { setErrorMessage("❌ No compound found."); return; }
       const data = await response.json();
-      if (!data.PropertyTable?.Properties?.length) {
-        setCompoundData(null);
-        setErrorMessage("❌ No compound found.");
-        return;
-      }
+      if (!data.PropertyTable?.Properties?.length) { setErrorMessage("❌ No compound found."); return; }
       setCompoundData(data.PropertyTable.Properties[0]);
-      setErrorMessage("");
     } catch (error) {
       console.log(error);
-      setCompoundData(null);
       setErrorMessage("⚠️ Failed to fetch compound data.");
     }
   };
-
-  // =========================
-  // UI
-  // =========================
 
   return (
     <div style={{
@@ -316,128 +259,77 @@ const Main = () => {
       background: "linear-gradient(160deg, #061410 0%, #0a1625 50%, #061008 100%)",
       fontFamily: "'Segoe UI', system-ui, sans-serif",
       overflowX: "hidden",
-      position: "relative",
     }}>
 
-      {/* ===== GLOBAL STYLES ===== */}
       <style>{`
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { overflow-x: hidden; }
-        @keyframes blobFloat1 {
-          0%,100%{transform:translate(0,0) scale(1)}
-          50%{transform:translate(25px,-18px) scale(1.1)}
-        }
-        @keyframes blobFloat2 {
-          0%,100%{transform:translate(0,0) scale(1)}
-          50%{transform:translate(-18px,25px) scale(1.08)}
-        }
-        @keyframes fadeUp {
-          from{opacity:0;transform:translateY(18px)}
-          to{opacity:1;transform:translateY(0)}
-        }
-        @keyframes shimmer {
-          0%{background-position:-200% center}
-          100%{background-position:200% center}
-        }
-        @keyframes scanline {
-          0%{transform:translateY(-100%)}
-          100%{transform:translateY(100vh)}
-        }
-        @keyframes pulseGlow {
-          0%,100%{box-shadow:0 0 20px #00ff8833}
-          50%{box-shadow:0 0 40px #00ff8866}
-        }
-        input::placeholder{color:#ffffff44}
-        input:focus{border-color:#00ff88 !important;box-shadow:0 0 0 3px #00ff8822 !important}
-        .quick-pill:hover{
-          background:rgba(0,255,136,0.15) !important;
-          border-color:#00ff88 !important;
-          transform:translateY(-2px);
-        }
-        .search-btn:hover{
-          transform:translateY(-1px);
-          box-shadow:0 8px 24px rgba(0,255,136,0.4) !important;
-        }
-        .nav-link:hover{color:#00ff88 !important}
-        .result-row:not(:last-child){border-bottom:1px solid #ffffff0e}
+        * { box-sizing: border-box; }
+        @keyframes blobFloat1 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(25px,-18px) scale(1.1)} }
+        @keyframes blobFloat2 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-18px,25px) scale(1.08)} }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes shimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
+        @keyframes pulseGlow { 0%,100%{box-shadow:0 0 20px #00ff8820} 50%{box-shadow:0 0 36px #00ff8840} }
+        input::placeholder { color: #ffffff44; }
+        input:focus { outline: none; border-color: #00ff88 !important; box-shadow: 0 0 0 3px #00ff8818 !important; }
+        .pill:hover { background: rgba(0,255,136,0.15) !important; border-color: #00ff88 !important; transform: translateY(-2px); }
+        .sbtn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,255,136,0.4) !important; }
+        .result-row:not(:last-child) { border-bottom: 1px solid #ffffff0d; }
       `}</style>
 
-      {/* ===== BACKGROUND BLOBS ===== */}
+      {/* BG Blobs */}
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
         <div style={{
-          position: "absolute", top: "8%", left: "3%",
-          width: 280, height: 280, borderRadius: "50%",
-          background: "radial-gradient(circle, #00ff8833 0%, transparent 70%)",
+          position: "absolute", top: "8%", left: "3%", width: 260, height: 260, borderRadius: "50%",
+          background: "radial-gradient(circle, #00ff8830 0%, transparent 70%)",
           filter: "blur(55px)", animation: "blobFloat1 9s ease-in-out infinite",
         }} />
         <div style={{
-          position: "absolute", bottom: "15%", right: "4%",
-          width: 220, height: 220, borderRadius: "50%",
-          background: "radial-gradient(circle, #00aaff28 0%, transparent 70%)",
+          position: "absolute", bottom: "12%", right: "4%", width: 210, height: 210, borderRadius: "50%",
+          background: "radial-gradient(circle, #00aaff25 0%, transparent 70%)",
           filter: "blur(45px)", animation: "blobFloat2 11s ease-in-out infinite",
-        }} />
-        <div style={{
-          position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
-          width: 400, height: 2, background: "linear-gradient(90deg,transparent,#00ff8811,transparent)",
-          animation: "scanline 6s linear infinite", pointerEvents: "none",
         }} />
       </div>
 
-      {/* ===== NAVBAR ===== */}
-      <nav style={{
-        position: "sticky", top: 0, zIndex: 100,
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "13px 18px",
-        background: "rgba(6,20,12,0.88)", backdropFilter: "blur(22px)",
-        borderBottom: "1px solid #00ff8818",
-      }}>
-        {/* Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: 9,
-            background: "linear-gradient(135deg, #00ff88, #00aaff)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 16, boxShadow: "0 0 14px #00ff8855", flexShrink: 0,
-          }}>⚗️</div>
-          <span style={{ color: "#00ff88", fontWeight: 800, fontSize: 14, letterSpacing: 0.3 }}>
-            Chemix<span style={{ color: "#00aaff" }}>Encyclopedia</span>
-          </span>
-        </div>
-
-        {/* Desktop Nav */}
-        <div style={{ display: "flex", gap: 20 }}>
-          {["Home", "Favorites", "About"].map((item, i) => (
-            <span key={item} className="nav-link" style={{
-              color: i === 0 ? "#00ff88" : "#ffffff66",
-              fontSize: 13, fontWeight: 600, cursor: "pointer",
-              transition: "color 0.2s",
-              borderBottom: i === 0 ? "1.5px solid #00ff88" : "none",
-              paddingBottom: 1,
-            }}>{item}</span>
-          ))}
-        </div>
-      </nav>
-
-      {/* ===== HERO SECTION ===== */}
       <div style={{ position: "relative", zIndex: 1 }}>
 
-        {/* Header Text */}
+        {/* ===== LOGO HEADER (NO duplicate navbar — just logo + brand name) ===== */}
         <div style={{
-          textAlign: "center", padding: "28px 20px 0",
-          animation: "fadeUp 0.7s ease both",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          gap: 12, padding: "28px 20px 6px",
+          animation: "fadeUp 0.6s ease both",
         }}>
+          <img
+            src={logo}
+            alt="Chemix Logo"
+            style={{
+              width: 50, height: 50, borderRadius: 14,
+              boxShadow: "0 0 20px #00ff8866",
+              objectFit: "cover",
+            }}
+          />
+          <div>
+            <div style={{ fontSize: 19, fontWeight: 900, lineHeight: 1.1 }}>
+              <span style={{ color: "#00ff88" }}>Chemix</span>
+              <span style={{ color: "#00aaff" }}>Encyclopedia</span>
+            </div>
+            <div style={{ color: "#ffffff44", fontSize: 10.5, fontWeight: 500, letterSpacing: 0.5, marginTop: 2 }}>
+              Powered by PubChem
+            </div>
+          </div>
+        </div>
+
+        {/* ===== HERO TITLE ===== */}
+        <div style={{ textAlign: "center", padding: "18px 20px 0", animation: "fadeUp 0.75s ease both" }}>
           <div style={{
             display: "inline-block",
-            background: "rgba(0,255,136,0.08)",
-            border: "1px solid #00ff8833",
+            background: "rgba(0,255,136,0.07)",
+            border: "1px solid #00ff8830",
             borderRadius: 20, padding: "4px 14px",
             fontSize: 10.5, color: "#00ff88",
             fontWeight: 700, letterSpacing: 1.2, marginBottom: 12,
           }}>🧬 CHEMISTRY DATABASE</div>
 
           <h1 style={{
-            fontSize: "clamp(22px, 6vw, 30px)",
-            fontWeight: 900, lineHeight: 1.2,
+            fontSize: "clamp(22px,6vw,30px)", fontWeight: 900, lineHeight: 1.2, margin: 0,
             background: "linear-gradient(90deg, #00ff88, #00d4ff, #a29bfe)",
             backgroundSize: "200% auto",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
@@ -451,14 +343,13 @@ const Main = () => {
         </div>
 
         {/* ===== SEARCH BAR ===== */}
-        <div style={{ padding: "22px 18px 0", animation: "fadeUp 0.9s ease both" }}>
+        <div style={{ padding: "20px 18px 0", animation: "fadeUp 0.9s ease both" }}>
           <div style={{
             display: "flex", alignItems: "center", gap: 10,
             background: "rgba(255,255,255,0.05)",
-            border: "1.5px solid #00ff8833",
+            border: "1.5px solid #00ff8830",
             borderRadius: 18, padding: "11px 14px",
             backdropFilter: "blur(20px)",
-            transition: "border-color 0.3s, box-shadow 0.3s",
           }}>
             <span style={{ fontSize: 17, flexShrink: 0 }}>🔍</span>
             <input
@@ -468,31 +359,24 @@ const Main = () => {
               onChange={(e) => setValue(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               style={{
-                flex: 1, background: "transparent", border: "none", outline: "none",
+                flex: 1, background: "transparent", border: "none",
                 color: "#fff", fontSize: 14, fontFamily: "inherit",
-                transition: "all 0.3s",
               }}
             />
-            <button
-              className="search-btn"
-              onClick={handleSearch}
-              style={{
-                background: "linear-gradient(135deg, #00ff88, #00aaff)",
-                border: "none", borderRadius: 12, padding: "8px 18px",
-                color: "#061410", fontSize: 13, fontWeight: 800,
-                cursor: "pointer", transition: "all 0.25s", flexShrink: 0,
-                boxShadow: "0 4px 16px rgba(0,255,136,0.3)",
-              }}
-            >Search</button>
+            <button className="sbtn" onClick={handleSearch} style={{
+              background: "linear-gradient(135deg, #00ff88, #00aaff)",
+              border: "none", borderRadius: 12, padding: "8px 18px",
+              color: "#061410", fontSize: 13, fontWeight: 800,
+              cursor: "pointer", transition: "all 0.25s", flexShrink: 0,
+              boxShadow: "0 4px 14px rgba(0,255,136,0.3)",
+            }}>Search</button>
           </div>
 
-          {/* Error */}
           {errorMessage && (
             <div style={{
-              marginTop: 12, color: "#ff6b6b", fontSize: 13,
+              marginTop: 10, color: "#ff6b6b", fontSize: 13,
               fontWeight: 600, textAlign: "center",
-              background: "rgba(255,107,107,0.1)", borderRadius: 10,
-              padding: "8px 14px",
+              background: "rgba(255,107,107,0.08)", borderRadius: 10, padding: "8px 14px",
             }}>{errorMessage}</div>
           )}
         </div>
@@ -500,50 +384,35 @@ const Main = () => {
         {/* ===== RESULT CARD ===== */}
         {compoundData && (
           <div style={{
-            margin: "18px 18px 0",
+            margin: "16px 18px 0",
             background: "rgba(0,255,136,0.04)",
             border: "1.5px solid #00ff8840",
             borderRadius: 20, overflow: "hidden",
             backdropFilter: "blur(16px)",
-            boxShadow: "0 0 30px rgba(0,255,136,0.12)",
+            boxShadow: "0 0 28px rgba(0,255,136,0.1)",
             animation: "fadeUp 0.5s ease both",
           }}>
-            {/* Card Header */}
             <div style={{
-              background: "linear-gradient(90deg, #00ff8815, #00aaff10)",
-              padding: "14px 18px",
-              borderBottom: "1px solid #00ff8820",
+              background: "linear-gradient(90deg,#00ff8814,#00aaff0e)",
+              padding: "13px 18px", borderBottom: "1px solid #00ff8818",
               display: "flex", alignItems: "center", gap: 10,
             }}>
-              <div style={{
-                width: 8, height: 8, borderRadius: "50%",
-                background: "#00ff88",
-                boxShadow: "0 0 8px #00ff88",
-              }} />
-              <span style={{ color: "#00ff88", fontWeight: 700, fontSize: 13 }}>
-                Compound Found
-              </span>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#00ff88", boxShadow: "0 0 8px #00ff88" }} />
+              <span style={{ color: "#00ff88", fontWeight: 700, fontSize: 13 }}>Compound Found</span>
             </div>
-
-            {/* Card Body */}
-            <div style={{ padding: "0 0 4px" }}>
+            <div>
               {[
                 { label: "IUPAC Name", value: compoundData.IUPACName || "Unknown", icon: "🏷️" },
                 { label: "Formula", value: compoundData.MolecularFormula, icon: "⚗️" },
                 { label: "Mol. Weight", value: `${compoundData.MolecularWeight} g/mol`, icon: "⚖️" },
               ].map((row) => (
                 <div key={row.label} className="result-row" style={{
-                  display: "flex", alignItems: "flex-start", gap: 12,
-                  padding: "13px 18px", transition: "background 0.2s",
+                  display: "flex", alignItems: "flex-start", gap: 12, padding: "13px 18px",
                 }}>
                   <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>{row.icon}</span>
                   <div>
-                    <div style={{ color: "#ffffff44", fontSize: 10, fontWeight: 700, letterSpacing: 0.8, marginBottom: 2 }}>
-                      {row.label}
-                    </div>
-                    <div style={{ color: "#fff", fontSize: 14, fontWeight: 600, wordBreak: "break-all" }}>
-                      {row.value}
-                    </div>
+                    <div style={{ color: "#ffffff44", fontSize: 10, fontWeight: 700, letterSpacing: 0.8, marginBottom: 2 }}>{row.label}</div>
+                    <div style={{ color: "#fff", fontSize: 14, fontWeight: 600, wordBreak: "break-all" }}>{row.value}</div>
                   </div>
                 </div>
               ))}
@@ -554,53 +423,43 @@ const Main = () => {
         {/* ===== CAROUSEL HEADER ===== */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "24px 20px 12px",
+          padding: "24px 20px 10px",
         }}>
-          <span style={{ color: "#ffffff55", fontSize: 11, fontWeight: 700, letterSpacing: 0.8 }}>
+          <span style={{ color: "#ffffff44", fontSize: 11, fontWeight: 700, letterSpacing: 0.8 }}>
             FEATURED COMPOUNDS
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button onClick={() => goTo(current - 1)} style={{
-              background: "rgba(255,255,255,0.06)", border: "1px solid #ffffff22",
+              background: "rgba(255,255,255,0.06)", border: "1px solid #ffffff20",
               borderRadius: 8, width: 28, height: 28, color: "#fff",
-              cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", fontSize: 14,
+              display: "flex", alignItems: "center", justifyContent: "center",
             }}>‹</button>
-            <span style={{ color: "#00ff8888", fontSize: 12, fontWeight: 600 }}>
+            <span style={{ color: "#00ff8877", fontSize: 12, fontWeight: 600, minWidth: 36, textAlign: "center" }}>
               {current + 1}/{chemicals.length}
             </span>
             <button onClick={() => goTo(current + 1)} style={{
-              background: "rgba(255,255,255,0.06)", border: "1px solid #ffffff22",
+              background: "rgba(255,255,255,0.06)", border: "1px solid #ffffff20",
               borderRadius: 8, width: 28, height: 28, color: "#fff",
-              cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", fontSize: 14,
+              display: "flex", alignItems: "center", justifyContent: "center",
             }}>›</button>
           </div>
         </div>
 
         {/* ===== CAROUSEL ===== */}
         <div
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
-          onMouseDown={onMouseDown}
-          onMouseMove={onMouseMove}
-          onMouseUp={onMouseUp}
+          onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}
+          onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp}
           style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1.18fr 1fr",
-            gap: 10,
-            padding: "0 12px",
-            alignItems: "center",
-            cursor: "grab",
-            userSelect: "none",
+            display: "grid", gridTemplateColumns: "1fr 1.18fr 1fr",
+            gap: 10, padding: "0 12px", alignItems: "center",
+            cursor: "grab", userSelect: "none",
           }}
         >
           {[prev, current, next].map((idx, pos) => (
             <div key={chemicals[idx].id} onClick={() => pos !== 1 && goTo(idx)}>
-              <MoleculeCard
-                chem={chemicals[idx]}
-                isActive={pos === 1}
-                isLeft={pos === 0}
-                isRight={pos === 2}
-              />
+              <MoleculeCard chem={chemicals[idx]} isActive={pos === 1} />
             </div>
           ))}
         </div>
@@ -609,54 +468,56 @@ const Main = () => {
         <div style={{ display: "flex", justifyContent: "center", gap: 7, padding: "14px 0 4px" }}>
           {chemicals.map((_, i) => (
             <div key={i} onClick={() => goTo(i)} style={{
-              width: i === current ? 22 : 7, height: 7,
-              borderRadius: 4,
-              background: i === current
-                ? "linear-gradient(90deg, #00ff88, #00aaff)"
-                : "#ffffff28",
-              cursor: "pointer",
-              transition: "all 0.38s cubic-bezier(0.4,0,0.2,1)",
+              width: i === current ? 22 : 7, height: 7, borderRadius: 4,
+              background: i === current ? "linear-gradient(90deg,#00ff88,#00aaff)" : "#ffffff25",
+              cursor: "pointer", transition: "all 0.38s cubic-bezier(0.4,0,0.2,1)",
             }} />
           ))}
         </div>
 
         {/* ===== WAVE ===== */}
-        <div style={{ height: 48, marginTop: 6 }}>
-          <svg viewBox="0 0 400 48" width="100%" height="100%" preserveAspectRatio="none">
-            <path d="M0,24 C80,0 140,48 200,24 C260,0 320,48 400,24 L400,48 L0,48 Z"
-              fill="rgba(0,255,136,0.04)" />
-            <path d="M0,32 C70,8 160,48 240,30 C310,14 360,46 400,32 L400,48 L0,48 Z"
-              fill="rgba(0,170,255,0.03)" />
+        <div style={{ height: 44, marginTop: 6 }}>
+          <svg viewBox="0 0 400 44" width="100%" height="100%" preserveAspectRatio="none">
+            <path d="M0,22 C80,0 140,44 200,22 C260,0 320,44 400,22 L400,44 L0,44 Z" fill="rgba(0,255,136,0.04)" />
+            <path d="M0,30 C70,8 160,44 240,28 C310,14 360,42 400,30 L400,44 L0,44 Z" fill="rgba(0,170,255,0.03)" />
           </svg>
         </div>
 
-        {/* ===== QUICK SEARCH PILLS ===== */}
-        <div style={{ padding: "4px 18px 40px" }}>
-          <p style={{ color: "#ffffff44", fontSize: 11, textAlign: "center", fontWeight: 600, letterSpacing: 0.8, marginBottom: 12 }}>
+        {/* ===== QUICK PILLS ===== */}
+        <div style={{ padding: "4px 18px 36px" }}>
+          <p style={{ color: "#ffffff40", fontSize: 11, textAlign: "center", fontWeight: 700, letterSpacing: 0.8, marginBottom: 12 }}>
             QUICK SEARCH
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
-            {["H₂O", "CO₂", "NaCl", "NH₃", "C₆H₁₂O₆", "CH₄", "C₂H₅OH"].map((f) => (
-              <button key={f} className="quick-pill" onClick={() => {
-                setValue(f.replace(/[₀-₉]/g, d => String("₀₁₂₃₄₅₆₇₈₉".indexOf(d))));
-                handleSearch();
+            {[
+              { label: "H₂O", query: "water" },
+              { label: "CO₂", query: "carbon dioxide" },
+              { label: "NaCl", query: "sodium chloride" },
+              { label: "NH₃", query: "ammonia" },
+              { label: "C₆H₁₂O₆", query: "glucose" },
+              { label: "CH₄", query: "methane" },
+              { label: "C₂H₅OH", query: "ethanol" },
+            ].map(({ label, query }) => (
+              <button key={label} className="pill" onClick={() => {
+                setValue(query);
+                setTimeout(handleSearch, 50);
               }} style={{
                 background: "rgba(255,255,255,0.04)",
-                border: "1px solid #00ff8828",
+                border: "1px solid #00ff8825",
                 borderRadius: 20, padding: "6px 14px",
                 color: "#00ff88", fontSize: 12, fontWeight: 700,
                 cursor: "pointer", fontFamily: "monospace",
                 transition: "all 0.22s ease",
-              }}>{f}</button>
+              }}>{label}</button>
             ))}
           </div>
         </div>
 
         {/* ===== INFO CARD ===== */}
         <div style={{
-          margin: "0 18px 40px",
-          background: "rgba(255,255,255,0.03)",
-          border: "1px solid #ffffff0f",
+          margin: "0 18px 44px",
+          background: "rgba(255,255,255,0.025)",
+          border: "1px solid #ffffff0e",
           borderRadius: 20, padding: "22px 20px",
           backdropFilter: "blur(10px)",
           animation: "pulseGlow 4s ease-in-out infinite",
@@ -664,7 +525,7 @@ const Main = () => {
           <h2 style={{ color: "#00ff88", fontSize: 16, fontWeight: 800, marginBottom: 10 }}>
             Welcome to Chemix-Encyclopedia 😎
           </h2>
-          <p style={{ color: "#ffffff66", fontSize: 13, lineHeight: 1.75 }}>
+          <p style={{ color: "#ffffff55", fontSize: 13, lineHeight: 1.75 }}>
             Made by <span style={{ color: "#00aaff", fontWeight: 700 }}>TimedCoder555</span>.
             <br /><br />
             Chemix-Encyclopedia helps users explore chemical compounds,
