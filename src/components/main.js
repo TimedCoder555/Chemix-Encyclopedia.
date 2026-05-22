@@ -6,7 +6,6 @@ const Main = () => {
   const handleSearch = async () => {
 
   if (!value.trim()) {
-    alert("Please enter a compound name 😄");
     return;
   }
 
@@ -20,21 +19,14 @@ const Main = () => {
 
     const data = await response.json();
 
-    console.log(data);
-
     const compound =
       data.PropertyTable.Properties[0];
 
-    alert(
-      `Compound Found 😎\n\n` +
-      `Name: ${compound.IUPACName}\n` +
-      `Formula: ${compound.MolecularFormula}\n` +
-      `Weight: ${compound.MolecularWeight}`
-    );
+    setCompoundData(compound);
 
   } catch (error) {
 
-    alert("Compound not found 😭");
+    setCompoundData(null);
 
     console.log(error);
 
