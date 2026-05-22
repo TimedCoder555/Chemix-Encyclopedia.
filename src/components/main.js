@@ -2,20 +2,33 @@ import React, { useState } from "react";
 
 const Main = () => {
 
-  // SEARCH INPUT
+  // =========================
+  // STATES
+  // =========================
+
   const [value, setValue] = useState("");
 
-  // COMPOUND DATA
   const [compoundData, setCompoundData] = useState(null);
 
+  const [errorMessage, setErrorMessage] = useState("");
+
+  // =========================
   // SEARCH FUNCTION
+  // =========================
+
   const handleSearch = async () => {
 
+    // EMPTY SEARCH STOP
+
     if (!value.trim()) {
+      setCompoundData(null);
+      setErrorMessage("Please enter a compound name.");
       return;
     }
 
     try {
+
+      // API REQUEST
 
       const response = await fetch(
         `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(
@@ -23,22 +36,57 @@ const Main = () => {
         )}/property/MolecularFormula,MolecularWeight,IUPACName/JSON`
       );
 
+      // IF INVALID COMPOUND
+
+      if (!response.ok) {
+
+        setCompoundData(null);
+
+        setErrorMessage("❌ No compound found.");
+
+        return;
+      }
+
       const data = await response.json();
 
-      const compound =
-        data.PropertyTable.Properties[0];
+      // SAFETY CHECK
+
+      if (
+        !data.PropertyTable ||
+        !data.PropertyTable.Properties ||
+        data.PropertyTable.Properties.length === 0
+      ) {
+
+        setCompoundData(null);
+
+        setErrorMessage("❌ No compound found.");
+
+        return;
+      }
+
+      // GET COMPOUND
+
+      const compound = data.PropertyTable.Properties[0];
 
       setCompoundData(compound);
 
+      setErrorMessage("");
+
     } catch (error) {
+
+      console.log(error);
 
       setCompoundData(null);
 
-      console.log(error);
+      setErrorMessage("⚠️ Failed to fetch compound data.");
 
     }
 
   };
+
+  // =========================
+  // UI
+  // =========================
 
   return (
 
@@ -52,28 +100,70 @@ const Main = () => {
       }}
     >
 
-      {/* TITLE */}
+      {/* ========================= */}
+      {/* TOP LEFT BRAND */}
+      {/* ========================= */}
+
+      <div
+        style={{
+          position: "absolute",
+          top: "20px",
+          left: "20px",
+          textAlign: "left",
+        }}
+      >
+
+        <h2
+          style={{
+            color: "#00ffe5",
+            margin: "0",
+            fontSize: "24px",
+          }}
+        >
+          Chemix-Encyclopedia
+        </h2>
+
+        <p
+          style={{
+            color: "#94a3b8",
+            margin: "0",
+            fontSize: "14px",
+          }}
+        >
+          by TimedCoder555
+        </p>
+
+      </div>
+
+      {/* ========================= */}
+      {/* MAIN TITLE */}
+      {/* ========================= */}
 
       <h1
         style={{
           fontSize: "3rem",
           color: "#00ffe5",
+          marginTop: "80px",
           marginBottom: "10px",
+          textShadow: "0 0 20px #00ffe5",
         }}
       >
-        Chemix-Encyclopedia
+        Explore The World Of Chemistry ⚗️
       </h1>
 
       <p
         style={{
           color: "#9ca3af",
           marginBottom: "40px",
+          fontSize: "18px",
         }}
       >
-        Explore Molecules • Chemistry • Scientific Data
+        Molecules • Elements • Scientific Data
       </p>
 
+      {/* ========================= */}
       {/* SEARCH AREA */}
+      {/* ========================= */}
 
       <div
         style={{
@@ -89,15 +179,21 @@ const Main = () => {
           placeholder="Search Compound..."
           value={value}
           onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSearch();
+            }
+          }}
           style={{
             padding: "15px",
-            width: "300px",
-            borderRadius: "10px",
+            width: "320px",
+            borderRadius: "12px",
             border: "1px solid cyan",
-            background: "#0f172a",
+            background: "rgba(15,23,42,0.9)",
             color: "white",
             outline: "none",
             fontSize: "16px",
+            boxShadow: "0 0 15px rgba(0,255,255,0.2)",
           }}
         />
 
@@ -105,13 +201,14 @@ const Main = () => {
           onClick={handleSearch}
           style={{
             padding: "15px 25px",
-            borderRadius: "10px",
+            borderRadius: "12px",
             border: "none",
             background: "#00ffe5",
             color: "black",
             fontWeight: "bold",
             cursor: "pointer",
             fontSize: "16px",
+            boxShadow: "0 0 20px rgba(0,255,229,0.5)",
           }}
         >
           Search
@@ -119,7 +216,32 @@ const Main = () => {
 
       </div>
 
-      {/* COMPOUND RESULT CARD */}
+      {/* ========================= */}
+      {/* ERROR MESSAGE */}
+      {/* ========================= */}
+
+      {
+
+        errorMessage && (
+
+          <div
+            style={{
+              marginTop: "25px",
+              color: "#ff6b6b",
+              fontSize: "18px",
+              fontWeight: "bold",
+            }}
+          >
+            {errorMessage}
+          </div>
+
+        )
+
+      }
+
+      {/* ========================= */}
+      {/* RESULT CARD */}
+      {/* ========================= */}
 
       {
 
@@ -150,20 +272,17 @@ const Main = () => {
             </h2>
 
             <p style={{ marginBottom: "15px" }}>
-              <strong>Name:</strong>
-              {" "}
-              {compoundData.IUPACName}
+              <strong>Name:</strong>{" "}
+              {compoundData.IUPACName || "Unknown"}
             </p>
 
             <p style={{ marginBottom: "15px" }}>
-              <strong>Formula:</strong>
-              {" "}
+              <strong>Formula:</strong>{" "}
               {compoundData.MolecularFormula}
             </p>
 
             <p>
-              <strong>Molecular Weight:</strong>
-              {" "}
+              <strong>Molecular Weight:</strong>{" "}
               {compoundData.MolecularWeight}
             </p>
 
@@ -173,18 +292,21 @@ const Main = () => {
 
       }
 
+      {/* ========================= */}
       {/* INFO CARD */}
+      {/* ========================= */}
 
       <div
         style={{
-          marginTop: "50px",
-          background: "#0f172a",
+          marginTop: "60px",
+          background: "rgba(15,23,42,0.85)",
           padding: "30px",
           borderRadius: "20px",
           maxWidth: "700px",
           marginLeft: "auto",
           marginRight: "auto",
           boxShadow: "0 0 20px rgba(0,255,229,0.2)",
+          border: "1px solid rgba(0,255,229,0.2)",
         }}
       >
 
@@ -205,10 +327,11 @@ const Main = () => {
         >
           Made by TimedCoder555.
           <br /><br />
+
           Chemix-Encyclopedia helps users explore
           chemical compounds, molecular information,
           and scientific chemistry resources in a
-          futuristic interface.
+          futuristic chemistry interface.
         </p>
 
       </div>
