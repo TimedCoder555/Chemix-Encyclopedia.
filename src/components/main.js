@@ -326,7 +326,7 @@ const Main = () => {
             borderRadius: 20, padding: "4px 14px",
             fontSize: 10.5, color: "#00ff88",
             fontWeight: 700, letterSpacing: 1.2, marginBottom: 12,
-          }}>🧬 CHEMISTRY DATABASE</div>
+          }}>TimedCoder</div>
 
           <h1 style={{
             fontSize: "clamp(22px,6vw,30px)", fontWeight: 900, lineHeight: 1.2, margin: 0,
