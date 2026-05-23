@@ -659,14 +659,4 @@ const Main = () => {
   );
 };
 
-const CARD_GRADS = [
-  "linear-gradient(135deg,#1a3d2b,#0d2b1a)",
-  "linear-gradient(135deg,#1a2b3d,#0d1a2b)",
-  "linear-gradient(135deg,#3d2b1a,#2b1a0d)",
-  "linear-gradient(135deg,#2b2010,#1a1408)",
-  "linear-gradient(135deg,#2b1a3d,#1a0d2b)",
-  "linear-gradient(135deg,#0d2d22,#071a14)",
-  "linear-gradient(135deg,#3d1a2b,#2b0d1a)",
-];
-
 export default Main;
