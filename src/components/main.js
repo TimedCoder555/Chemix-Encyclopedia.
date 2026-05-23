@@ -1,542 +1,380 @@
 import React, { useState, useEffect, useRef } from "react";
 import logo from "../img/logo.png";
-
-// =========================
-// CHEMICAL DATA
-// =========================
-
-const chemicals = [
-  {
-    id: 1, name: "Water", formula: "H₂O",
-    description: "The universal solvent of life",
-    color: "#00d4ff", bg: "linear-gradient(135deg, #0a3a4a 0%, #0d6377 100%)",
-    atoms: [
-      { symbol: "H", x: 28, y: 58, r: 17, color: "#a8e6ff" },
-      { symbol: "O", x: 50, y: 40, r: 23, color: "#00d4ff" },
-      { symbol: "H", x: 72, y: 58, r: 17, color: "#a8e6ff" },
-    ],
-    bonds: [
-      { x1: "34%", y1: "56%", x2: "46%", y2: "46%" },
-      { x1: "66%", y1: "56%", x2: "54%", y2: "46%" },
-    ],
-  },
-  {
-    id: 2, name: "Carbon Dioxide", formula: "CO₂",
-    description: "Greenhouse gas & photosynthesis fuel",
-    color: "#ff6b6b", bg: "linear-gradient(135deg, #3a0a0a 0%, #6d1a1a 100%)",
-    atoms: [
-      { symbol: "O", x: 18, y: 50, r: 21, color: "#ff6b6b" },
-      { symbol: "C", x: 50, y: 50, r: 25, color: "#ff9f43" },
-      { symbol: "O", x: 82, y: 50, r: 21, color: "#ff6b6b" },
-    ],
-    bonds: [
-      { x1: "26%", y1: "50%", x2: "43%", y2: "50%" },
-      { x1: "57%", y1: "50%", x2: "74%", y2: "50%" },
-    ],
-  },
-  {
-    id: 3, name: "Sodium Chloride", formula: "NaCl",
-    description: "Common table salt — ionic bond",
-    color: "#a29bfe", bg: "linear-gradient(135deg, #1a0a3a 0%, #2e1a6d 100%)",
-    atoms: [
-      { symbol: "Na", x: 32, y: 50, r: 27, color: "#a29bfe" },
-      { symbol: "Cl", x: 68, y: 50, r: 25, color: "#55efc4" },
-    ],
-    bonds: [{ x1: "41%", y1: "50%", x2: "59%", y2: "50%" }],
-  },
-  {
-    id: 4, name: "Ammonia", formula: "NH₃",
-    description: "Nitrogen compound, key in fertilizers",
-    color: "#00b894", bg: "linear-gradient(135deg, #0a2a1a 0%, #0d5535 100%)",
-    atoms: [
-      { symbol: "N", x: 50, y: 36, r: 25, color: "#00b894" },
-      { symbol: "H", x: 27, y: 63, r: 16, color: "#81ecec" },
-      { symbol: "H", x: 50, y: 70, r: 16, color: "#81ecec" },
-      { symbol: "H", x: 73, y: 63, r: 16, color: "#81ecec" },
-    ],
-    bonds: [
-      { x1: "44%", y1: "46%", x2: "32%", y2: "59%" },
-      { x1: "50%", y1: "48%", x2: "50%", y2: "62%" },
-      { x1: "56%", y1: "46%", x2: "68%", y2: "59%" },
-    ],
-  },
-  {
-    id: 5, name: "Glucose", formula: "C₆H₁₂O₆",
-    description: "Primary energy source for cells",
-    color: "#fdcb6e", bg: "linear-gradient(135deg, #2a1a0a 0%, #6d450a 100%)",
-    atoms: [
-      { symbol: "C", x: 22, y: 48, r: 19, color: "#fdcb6e" },
-      { symbol: "C", x: 48, y: 28, r: 19, color: "#fdcb6e" },
-      { symbol: "C", x: 75, y: 42, r: 19, color: "#fdcb6e" },
-      { symbol: "O", x: 62, y: 68, r: 17, color: "#ff7675" },
-      { symbol: "H", x: 12, y: 68, r: 13, color: "#dfe6e9" },
-    ],
-    bonds: [
-      { x1: "28%", y1: "48%", x2: "43%", y2: "33%" },
-      { x1: "53%", y1: "33%", x2: "70%", y2: "44%" },
-      { x1: "73%", y1: "50%", x2: "65%", y2: "63%" },
-    ],
-  },
-  {
-    id: 6, name: "Methane", formula: "CH₄",
-    description: "Simplest hydrocarbon & natural gas",
-    color: "#74b9ff", bg: "linear-gradient(135deg, #0a1a3a 0%, #1a356b 100%)",
-    atoms: [
-      { symbol: "C", x: 50, y: 50, r: 25, color: "#74b9ff" },
-      { symbol: "H", x: 23, y: 33, r: 15, color: "#dfe6e9" },
-      { symbol: "H", x: 77, y: 33, r: 15, color: "#dfe6e9" },
-      { symbol: "H", x: 23, y: 67, r: 15, color: "#dfe6e9" },
-      { symbol: "H", x: 77, y: 67, r: 15, color: "#dfe6e9" },
-    ],
-    bonds: [
-      { x1: "43%", y1: "44%", x2: "27%", y2: "36%" },
-      { x1: "57%", y1: "44%", x2: "73%", y2: "36%" },
-      { x1: "43%", y1: "56%", x2: "27%", y2: "64%" },
-      { x1: "57%", y1: "56%", x2: "73%", y2: "64%" },
-    ],
-  },
-  {
-    id: 7, name: "Ethanol", formula: "C₂H₅OH",
-    description: "Alcohol used in beverages & fuel",
-    color: "#fd79a8", bg: "linear-gradient(135deg, #2a0a1a 0%, #6d1a4a 100%)",
-    atoms: [
-      { symbol: "C", x: 28, y: 50, r: 21, color: "#fd79a8" },
-      { symbol: "C", x: 56, y: 50, r: 21, color: "#fd79a8" },
-      { symbol: "O", x: 78, y: 36, r: 19, color: "#ff7675" },
-      { symbol: "H", x: 14, y: 36, r: 13, color: "#dfe6e9" },
-      { symbol: "H", x: 48, y: 72, r: 12, color: "#dfe6e9" },
-    ],
-    bonds: [
-      { x1: "34%", y1: "50%", x2: "50%", y2: "50%" },
-      { x1: "62%", y1: "46%", x2: "72%", y2: "39%" },
-      { x1: "21%", y1: "46%", x2: "16%", y2: "39%" },
-    ],
-  },
-];
-
-// =========================
-// MOLECULE CARD
-// =========================
-
-const MoleculeCard = ({ chem, isActive }) => (
-  <div style={{
-    background: chem.bg,
-    borderRadius: 22,
-    padding: "18px 14px 16px",
-    display: "flex", flexDirection: "column", alignItems: "center",
-    position: "relative", overflow: "hidden",
-    border: `1.5px solid ${chem.color}${isActive ? "66" : "28"}`,
-    boxShadow: isActive
-      ? `0 0 32px ${chem.color}44, 0 8px 28px rgba(0,0,0,0.5)`
-      : "0 4px 14px rgba(0,0,0,0.3)",
-    transform: isActive ? "scale(1)" : "scale(0.88)",
-    opacity: isActive ? 1 : 0.58,
-    transition: "all 0.45s cubic-bezier(0.4,0,0.2,1)",
-    cursor: isActive ? "default" : "pointer",
-    minHeight: 220, userSelect: "none",
-  }}>
-    <div style={{
-      position: "absolute", top: -22, right: -22,
-      width: 90, height: 90, borderRadius: "50%",
-      background: `radial-gradient(circle, ${chem.color}33, transparent 70%)`,
-      pointerEvents: "none",
-    }} />
-    <div style={{ width: "100%", height: 112 }}>
-      <svg width="100%" height="100%" viewBox="0 0 100 100" style={{ overflow: "visible" }}>
-        {chem.bonds.map((b, i) => (
-          <line key={i} x1={b.x1} y1={b.y1} x2={b.x2} y2={b.y2}
-            stroke={chem.color} strokeWidth="2.2" strokeOpacity="0.65" strokeLinecap="round" />
-        ))}
-        {chem.atoms.map((a, i) => (
-          <g key={i}>
-            <circle cx={`${a.x}%`} cy={`${a.y}%`} r={a.r}
-              fill={a.color} fillOpacity="0.15" stroke={a.color} strokeWidth="1.6" />
-            <text x={`${a.x}%`} y={`${a.y}%`}
-              textAnchor="middle" dominantBaseline="central"
-              fill={a.color} fontSize={a.r > 20 ? "10" : "8"}
-              fontWeight="700" fontFamily="monospace">{a.symbol}</text>
-          </g>
-        ))}
-      </svg>
-    </div>
-    <div style={{ textAlign: "center", marginTop: 4 }}>
-      <div style={{ fontSize: 19, fontWeight: 800, color: "#fff" }}>{chem.formula}</div>
-      <div style={{ fontSize: 12, color: chem.color, fontWeight: 600, marginTop: 2 }}>{chem.name}</div>
-      <div style={{ fontSize: 10, color: "#ffffff66", marginTop: 3, lineHeight: 1.4 }}>{chem.description}</div>
-    </div>
-  </div>
-);
-
-// =========================
-// MAIN COMPONENT
-// =========================
+import heroBg from "../img/bg.jpg";
 
 const Main = () => {
 
   const [value, setValue] = useState("");
   const [compoundData, setCompoundData] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
-  const [current, setCurrent] = useState(0);
-
-  const touchStartX = useRef(null);
-  const touchStartY = useRef(null);
-  const timerRef = useRef(null);
-  const isDragging = useRef(false);
-  const dragStartX = useRef(null);
-
-  const startTimer = () => {
-    clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      setCurrent((c) => (c + 1) % chemicals.length);
-    }, 3200);
-  };
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("home");
+  const [favorites, setFavorites] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("chemix_favorites") || "[]"); }
+    catch { return []; }
+  });
 
   useEffect(() => {
-    startTimer();
-    return () => clearInterval(timerRef.current);
-  }, []);
+    localStorage.setItem("chemix_favorites", JSON.stringify(favorites));
+  }, [favorites]);
 
-  const goTo = (i) => {
-    setCurrent((i + chemicals.length) % chemicals.length);
-    startTimer();
-  };
-
-  const onTouchStart = (e) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].clientY;
-  };
-  const onTouchEnd = (e) => {
-    if (touchStartX.current === null) return;
-    const dx = e.changedTouches[0].clientX - touchStartX.current;
-    const dy = e.changedTouches[0].clientY - touchStartY.current;
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
-      goTo(dx < 0 ? current + 1 : current - 1);
-    }
-    touchStartX.current = null;
-  };
-
-  const onMouseDown = (e) => { isDragging.current = false; dragStartX.current = e.clientX; };
-  const onMouseMove = (e) => {
-    if (dragStartX.current !== null && Math.abs(e.clientX - dragStartX.current) > 5)
-      isDragging.current = true;
-  };
-  const onMouseUp = (e) => {
-    if (dragStartX.current === null) return;
-    const dx = e.clientX - dragStartX.current;
-    if (isDragging.current && Math.abs(dx) > 50) goTo(dx < 0 ? current + 1 : current - 1);
-    dragStartX.current = null;
-    isDragging.current = false;
-  };
-
-  const prev = (current - 1 + chemicals.length) % chemicals.length;
-  const next = (current + 1) % chemicals.length;
-
-  const handleSearch = async () => {
-    if (!value.trim()) {
-      setCompoundData(null);
-      setErrorMessage("Please enter a compound name.");
-      return;
-    }
-    setErrorMessage("");
-    setCompoundData(null);
+  const handleSearch = async (q) => {
+    const query = (q || value).trim();
+    if (!query) { setErrorMessage("Please enter a compound name."); return; }
+    setErrorMessage(""); setCompoundData(null); setLoading(true);
     try {
-      const response = await fetch(
-        `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(value)}/property/MolecularFormula,MolecularWeight,IUPACName/JSON`
+      const res = await fetch(
+        `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(query)}/property/MolecularFormula,MolecularWeight,IUPACName/JSON`
       );
-      if (!response.ok) { setErrorMessage("❌ No compound found."); return; }
-      const data = await response.json();
-      if (!data.PropertyTable?.Properties?.length) { setErrorMessage("❌ No compound found."); return; }
-      setCompoundData(data.PropertyTable.Properties[0]);
-    } catch (error) {
-      console.log(error);
-      setErrorMessage("⚠️ Failed to fetch compound data.");
-    }
+      if (!res.ok) { setErrorMessage("❌ No compound found."); setLoading(false); return; }
+      const data = await res.json();
+      if (!data.PropertyTable?.Properties?.length) { setErrorMessage("❌ No compound found."); setLoading(false); return; }
+      setCompoundData({ ...data.PropertyTable.Properties[0], searchName: query });
+      setActiveTab("home");
+    } catch { setErrorMessage("⚠️ Failed to fetch data."); }
+    setLoading(false);
   };
+
+  const isFav = (c) => c && favorites.some(f => f.MolecularFormula === c.MolecularFormula);
+  const addFav = (c) => { if (!c || isFav(c)) return; setFavorites(p => [c, ...p]); };
+  const removeFav = (formula) => setFavorites(p => p.filter(f => f.MolecularFormula !== formula));
+
+  const cardGrads = [
+    "linear-gradient(135deg, #2d5a3d 0%, #1a3d2b 100%)",
+    "linear-gradient(135deg, #2d3d5a 0%, #1a2b3d 100%)",
+    "linear-gradient(135deg, #5a3d2d 0%, #3d2b1a 100%)",
+    "linear-gradient(135deg, #4a3d20 0%, #2b2010 100%)",
+    "linear-gradient(135deg, #3d2d5a 0%, #2b1a3d 100%)",
+    "linear-gradient(135deg, #1a4a3a 0%, #0d2d22 100%)",
+    "linear-gradient(135deg, #5a2d3d 0%, #3d1a2b 100%)",
+  ];
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "linear-gradient(160deg, #061410 0%, #0a1625 50%, #061008 100%)",
-      fontFamily: "'Segoe UI', system-ui, sans-serif",
-      overflowX: "hidden",
-    }}>
+    <div style={{ minHeight: "100vh", background: "#eef2ee", fontFamily: "'Segoe UI', system-ui, sans-serif", overflowX: "hidden" }}>
 
       <style>{`
-        * { box-sizing: border-box; }
-        @keyframes blobFloat1 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(25px,-18px) scale(1.1)} }
-        @keyframes blobFloat2 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-18px,25px) scale(1.08)} }
-        @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes shimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
-        @keyframes pulseGlow { 0%,100%{box-shadow:0 0 20px #00ff8820} 50%{box-shadow:0 0 36px #00ff8840} }
-        input::placeholder { color: #ffffff44; }
-        input:focus { outline: none; border-color: #00ff88 !important; box-shadow: 0 0 0 3px #00ff8818 !important; }
-        .pill:hover { background: rgba(0,255,136,0.15) !important; border-color: #00ff88 !important; transform: translateY(-2px); }
-        .sbtn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,255,136,0.4) !important; }
-        .result-row:not(:last-child) { border-bottom: 1px solid #ffffff0d; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes slideDown { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes spin { to{transform:rotate(360deg)} }
+        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+        input::placeholder { color: rgba(255,255,255,0.5); }
+        input:focus { outline: none; }
+        .fav-card { transition: transform 0.2s, box-shadow 0.2s; cursor: default; }
+        .fav-card:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.18) !important; }
+        .chip:hover { background: rgba(45,90,61,0.2) !important; transform: translateY(-1px); }
+        .plus-btn:active { transform: scale(0.94) !important; }
+        .tab:hover { background: rgba(255,255,255,0.2) !important; }
+        .search-box:focus-within { border-color: rgba(255,255,255,0.8) !important; }
+        .sbtn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(74,222,128,0.45) !important; }
+        .sbtn:active { transform: scale(0.97); }
       `}</style>
 
-      {/* BG Blobs */}
-      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
-        <div style={{
-          position: "absolute", top: "8%", left: "3%", width: 260, height: 260, borderRadius: "50%",
-          background: "radial-gradient(circle, #00ff8830 0%, transparent 70%)",
-          filter: "blur(55px)", animation: "blobFloat1 9s ease-in-out infinite",
-        }} />
-        <div style={{
-          position: "absolute", bottom: "12%", right: "4%", width: 210, height: 210, borderRadius: "50%",
-          background: "radial-gradient(circle, #00aaff25 0%, transparent 70%)",
-          filter: "blur(45px)", animation: "blobFloat2 11s ease-in-out infinite",
-        }} />
-      </div>
+      {/* ══════════ HERO ══════════ */}
+      <div style={{
+        position: "relative", minHeight: 430,
+        backgroundImage: `url(${heroBg})`,
+        backgroundSize: "cover", backgroundPosition: "center",
+        display: "flex", flexDirection: "column",
+      }}>
 
-      <div style={{ position: "relative", zIndex: 1 }}>
-
-        {/* ===== LOGO HEADER (NO duplicate navbar — just logo + brand name) ===== */}
+        {/* Overlay */}
         <div style={{
-          display: "flex", alignItems: "center", justifyContent: "center",
-          gap: 12, padding: "28px 20px 6px",
-          animation: "fadeUp 0.6s ease both",
+          position: "absolute", inset: 0,
+          background: "linear-gradient(180deg,rgba(5,20,10,0.6) 0%,rgba(20,55,30,0.5) 55%,rgba(40,80,50,0.75) 100%)",
+        }} />
+
+        {/* ── TOP BAR ── */}
+        <div style={{
+          position: "relative", zIndex: 10,
+          display: "flex", alignItems: "center", gap: 10,
+          padding: "14px 14px 0",
         }}>
-          <img
-            src={logo}
-            alt="Chemix Logo"
-            style={{
-              width: 50, height: 50, borderRadius: 14,
-              boxShadow: "0 0 20px #00ff8866",
-              objectFit: "cover",
-            }}
-          />
-          <div>
-            <div style={{ fontSize: 19, fontWeight: 900, lineHeight: 1.1 }}>
-              <span style={{ color: "#00ff88" }}>Chemix</span>
-              <span style={{ color: "#00aaff" }}>Encyclopedia</span>
-            </div>
-            <div style={{ color: "#ffffff44", fontSize: 10.5, fontWeight: 500, letterSpacing: 0.5, marginTop: 2 }}>
-              Powered by PubChem
-            </div>
-          </div>
-        </div>
 
-        {/* ===== HERO TITLE ===== */}
-        <div style={{ textAlign: "center", padding: "18px 20px 0", animation: "fadeUp 0.75s ease both" }}>
-          <div style={{
-            display: "inline-block",
-            background: "rgba(0,255,136,0.07)",
-            border: "1px solid #00ff8830",
-            borderRadius: 20, padding: "4px 14px",
-            fontSize: 10.5, color: "#00ff88",
-            fontWeight: 700, letterSpacing: 1.2, marginBottom: 12,
-          }}>TimedCoder</div>
-
-          <h1 style={{
-            fontSize: "clamp(22px,6vw,30px)", fontWeight: 900, lineHeight: 1.2, margin: 0,
-            background: "linear-gradient(90deg, #00ff88, #00d4ff, #a29bfe)",
-            backgroundSize: "200% auto",
-            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-            animation: "shimmer 4s linear infinite",
+          {/* Search — LEFT */}
+          <div className="search-box" style={{
+            flex: 1, display: "flex", alignItems: "center", gap: 8,
+            background: "rgba(255,255,255,0.13)",
+            border: "1.5px solid rgba(255,255,255,0.28)",
+            borderRadius: 50, padding: "9px 14px",
+            backdropFilter: "blur(18px)",
+            transition: "border-color 0.2s",
           }}>
-            Explore Chemical<br />Compounds
-          </h1>
-          <p style={{ color: "#ffffff55", fontSize: 13, marginTop: 8 }}>
-            Search from millions of compounds via PubChem
-          </p>
-        </div>
-
-        {/* ===== SEARCH BAR ===== */}
-        <div style={{ padding: "20px 18px 0", animation: "fadeUp 0.9s ease both" }}>
-          <div style={{
-            display: "flex", alignItems: "center", gap: 10,
-            background: "rgba(255,255,255,0.05)",
-            border: "1.5px solid #00ff8830",
-            borderRadius: 18, padding: "11px 14px",
-            backdropFilter: "blur(20px)",
-          }}>
-            <span style={{ fontSize: 17, flexShrink: 0 }}>🔍</span>
+            {loading
+              ? <div style={{ width: 14, height: 14, border: "2px solid #4ade80", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite", flexShrink: 0 }} />
+              : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0 }}>
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+            }
             <input
-              type="text"
-              placeholder="Search: H2O, CO2, NaCl, Glucose..."
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              style={{
-                flex: 1, background: "transparent", border: "none",
-                color: "#fff", fontSize: 14, fontFamily: "inherit",
-              }}
+              type="text" value={value}
+              onChange={e => setValue(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleSearch()}
+              placeholder="Search compound..."
+              style={{ flex: 1, background: "transparent", border: "none", color: "#fff", fontSize: 13.5, fontFamily: "inherit", minWidth: 0 }}
             />
-            <button className="sbtn" onClick={handleSearch} style={{
-              background: "linear-gradient(135deg, #00ff88, #00aaff)",
-              border: "none", borderRadius: 12, padding: "8px 18px",
-              color: "#061410", fontSize: 13, fontWeight: 800,
-              cursor: "pointer", transition: "all 0.25s", flexShrink: 0,
-              boxShadow: "0 4px 14px rgba(0,255,136,0.3)",
-            }}>Search</button>
+            {value && (
+              <button onClick={() => { setValue(""); setCompoundData(null); setErrorMessage(""); }}
+                style={{ background: "none", border: "none", color: "rgba(255,255,255,0.65)", cursor: "pointer", fontSize: 17, padding: 0, lineHeight: 1 }}>×</button>
+            )}
           </div>
 
-          {errorMessage && (
-            <div style={{
-              marginTop: 10, color: "#ff6b6b", fontSize: 13,
-              fontWeight: 600, textAlign: "center",
-              background: "rgba(255,107,107,0.08)", borderRadius: 10, padding: "8px 14px",
-            }}>{errorMessage}</div>
-          )}
-        </div>
-
-        {/* ===== RESULT CARD ===== */}
-        {compoundData && (
-          <div style={{
-            margin: "16px 18px 0",
-            background: "rgba(0,255,136,0.04)",
-            border: "1.5px solid #00ff8840",
-            borderRadius: 20, overflow: "hidden",
-            backdropFilter: "blur(16px)",
-            boxShadow: "0 0 28px rgba(0,255,136,0.1)",
-            animation: "fadeUp 0.5s ease both",
-          }}>
-            <div style={{
-              background: "linear-gradient(90deg,#00ff8814,#00aaff0e)",
-              padding: "13px 18px", borderBottom: "1px solid #00ff8818",
-              display: "flex", alignItems: "center", gap: 10,
-            }}>
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#00ff88", boxShadow: "0 0 8px #00ff88" }} />
-              <span style={{ color: "#00ff88", fontWeight: 700, fontSize: 13 }}>Compound Found</span>
-            </div>
-            <div>
-              {[
-                { label: "IUPAC Name", value: compoundData.IUPACName || "Unknown", icon: "🏷️" },
-                { label: "Formula", value: compoundData.MolecularFormula, icon: "⚗️" },
-                { label: "Mol. Weight", value: `${compoundData.MolecularWeight} g/mol`, icon: "⚖️" },
-              ].map((row) => (
-                <div key={row.label} className="result-row" style={{
-                  display: "flex", alignItems: "flex-start", gap: 12, padding: "13px 18px",
-                }}>
-                  <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>{row.icon}</span>
-                  <div>
-                    <div style={{ color: "#ffffff44", fontSize: 10, fontWeight: 700, letterSpacing: 0.8, marginBottom: 2 }}>{row.label}</div>
-                    <div style={{ color: "#fff", fontSize: 14, fontWeight: 600, wordBreak: "break-all" }}>{row.value}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ===== CAROUSEL HEADER ===== */}
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "24px 20px 10px",
-        }}>
-          <span style={{ color: "#ffffff44", fontSize: 11, fontWeight: 700, letterSpacing: 0.8 }}>
-            FEATURED COMPOUNDS
-          </span>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <button onClick={() => goTo(current - 1)} style={{
-              background: "rgba(255,255,255,0.06)", border: "1px solid #ffffff20",
-              borderRadius: 8, width: 28, height: 28, color: "#fff",
-              cursor: "pointer", fontSize: 14,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>‹</button>
-            <span style={{ color: "#00ff8877", fontSize: 12, fontWeight: 600, minWidth: 36, textAlign: "center" }}>
-              {current + 1}/{chemicals.length}
-            </span>
-            <button onClick={() => goTo(current + 1)} style={{
-              background: "rgba(255,255,255,0.06)", border: "1px solid #ffffff20",
-              borderRadius: 8, width: 28, height: 28, color: "#fff",
-              cursor: "pointer", fontSize: 14,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>›</button>
-          </div>
-        </div>
-
-        {/* ===== CAROUSEL ===== */}
-        <div
-          onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}
-          onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp}
-          style={{
-            display: "grid", gridTemplateColumns: "1fr 1.18fr 1fr",
-            gap: 10, padding: "0 12px", alignItems: "center",
-            cursor: "grab", userSelect: "none",
-          }}
-        >
-          {[prev, current, next].map((idx, pos) => (
-            <div key={chemicals[idx].id} onClick={() => pos !== 1 && goTo(idx)}>
-              <MoleculeCard chem={chemicals[idx]} isActive={pos === 1} />
-            </div>
-          ))}
-        </div>
-
-        {/* ===== DOTS ===== */}
-        <div style={{ display: "flex", justifyContent: "center", gap: 7, padding: "14px 0 4px" }}>
-          {chemicals.map((_, i) => (
-            <div key={i} onClick={() => goTo(i)} style={{
-              width: i === current ? 22 : 7, height: 7, borderRadius: 4,
-              background: i === current ? "linear-gradient(90deg,#00ff88,#00aaff)" : "#ffffff25",
-              cursor: "pointer", transition: "all 0.38s cubic-bezier(0.4,0,0.2,1)",
-            }} />
-          ))}
-        </div>
-
-        {/* ===== WAVE ===== */}
-        <div style={{ height: 44, marginTop: 6 }}>
-          <svg viewBox="0 0 400 44" width="100%" height="100%" preserveAspectRatio="none">
-            <path d="M0,22 C80,0 140,44 200,22 C260,0 320,44 400,22 L400,44 L0,44 Z" fill="rgba(0,255,136,0.04)" />
-            <path d="M0,30 C70,8 160,44 240,28 C310,14 360,42 400,30 L400,44 L0,44 Z" fill="rgba(0,170,255,0.03)" />
-          </svg>
-        </div>
-
-        {/* ===== QUICK PILLS ===== */}
-        <div style={{ padding: "4px 18px 36px" }}>
-          <p style={{ color: "#ffffff40", fontSize: 11, textAlign: "center", fontWeight: 700, letterSpacing: 0.8, marginBottom: 12 }}>
-            QUICK SEARCH
-          </p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
+          {/* Nav — RIGHT */}
+          <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
             {[
-              { label: "H₂O", query: "water" },
-              { label: "CO₂", query: "carbon dioxide" },
-              { label: "NaCl", query: "sodium chloride" },
-              { label: "NH₃", query: "ammonia" },
-              { label: "C₆H₁₂O₆", query: "glucose" },
-              { label: "CH₄", query: "methane" },
-              { label: "C₂H₅OH", query: "ethanol" },
-            ].map(({ label, query }) => (
-              <button key={label} className="pill" onClick={() => {
-                setValue(query);
-                setTimeout(handleSearch, 50);
-              }} style={{
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid #00ff8825",
-                borderRadius: 20, padding: "6px 14px",
-                color: "#00ff88", fontSize: 12, fontWeight: 700,
-                cursor: "pointer", fontFamily: "monospace",
-                transition: "all 0.22s ease",
-              }}>{label}</button>
+              { id: "home", label: "Home" },
+              { id: "favorites", label: "Favs", badge: favorites.length },
+            ].map(t => (
+              <button key={t.id} className="tab" onClick={() => setActiveTab(t.id)} style={{
+                background: activeTab === t.id ? "rgba(255,255,255,0.22)" : "transparent",
+                border: activeTab === t.id ? "1px solid rgba(255,255,255,0.38)" : "1px solid transparent",
+                borderRadius: 20, padding: "6px 11px",
+                color: activeTab === t.id ? "#fff" : "rgba(255,255,255,0.65)",
+                fontSize: 12, fontWeight: 700, cursor: "pointer",
+                backdropFilter: "blur(10px)", transition: "all 0.2s",
+                display: "flex", alignItems: "center", gap: 5,
+              }}>
+                {t.label}
+                {t.badge > 0 && (
+                  <span style={{ background: "#4ade80", color: "#0a2010", borderRadius: 10, padding: "1px 5px", fontSize: 10, fontWeight: 800 }}>
+                    {t.badge}
+                  </span>
+                )}
+              </button>
             ))}
           </div>
         </div>
 
-        {/* ===== INFO CARD ===== */}
+        {/* ── HERO TEXT ── */}
         <div style={{
-          margin: "0 18px 44px",
-          background: "rgba(255,255,255,0.025)",
-          border: "1px solid #ffffff0e",
-          borderRadius: 20, padding: "22px 20px",
-          backdropFilter: "blur(10px)",
-          animation: "pulseGlow 4s ease-in-out infinite",
+          position: "relative", zIndex: 10, flex: 1,
+          display: "flex", flexDirection: "column", justifyContent: "flex-end",
+          padding: "0 20px 54px",
+          animation: "fadeUp 0.7s ease both",
         }}>
-          <h2 style={{ color: "#00ff88", fontSize: 16, fontWeight: 800, marginBottom: 10 }}>
-            Welcome to Chemix-Encyclopedia 😎
-          </h2>
-          <p style={{ color: "#ffffff55", fontSize: 13, lineHeight: 1.75 }}>
-            Made by <span style={{ color: "#00aaff", fontWeight: 700 }}>TimedCoder555</span>.
-            <br /><br />
-            Chemix-Encyclopedia helps users explore chemical compounds,
-            molecular information, and scientific chemistry resources
-            in a futuristic chemistry interface.
+          <h1 style={{
+            fontSize: "clamp(26px,8vw,38px)", fontWeight: 900, color: "#fff",
+            lineHeight: 1.18, letterSpacing: -0.5, marginBottom: 10,
+            textShadow: "0 2px 18px rgba(0,0,0,0.45)",
+          }}>
+            "Chemistry is the<br />
+            <span style={{ color: "#86efac" }}>poetry</span> of<br />
+            invisible molecules."
+          </h1>
+          <p style={{ color: "rgba(255,255,255,0.72)", fontSize: 14, lineHeight: 1.65, maxWidth: 340 }}>
+            Explore compounds, elements, reactions and molecular structures in a futuristic chemistry experience.
           </p>
+          <button className="sbtn" onClick={() => handleSearch()} style={{
+            marginTop: 18, alignSelf: "flex-start",
+            background: "linear-gradient(135deg,#4ade80,#22c55e)",
+            border: "none", borderRadius: 50, padding: "11px 22px",
+            color: "#0a2010", fontSize: 13.5, fontWeight: 800, cursor: "pointer",
+            boxShadow: "0 4px 18px rgba(74,222,128,0.38)",
+            display: "flex", alignItems: "center", gap: 8, transition: "all 0.22s",
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            Search Compound
+          </button>
+          {errorMessage && (
+            <div style={{ marginTop: 10, color: "#fca5a5", fontSize: 13, fontWeight: 600, animation: "fadeIn 0.3s ease" }}>
+              {errorMessage}
+            </div>
+          )}
         </div>
 
+        {/* Wave */}
+        <div style={{ position: "absolute", bottom: -1, left: 0, right: 0, zIndex: 5 }}>
+          <svg viewBox="0 0 414 56" width="100%" height="56" preserveAspectRatio="none">
+            <path d="M0,0 C60,40 120,8 200,30 C270,50 340,12 414,36 L414,56 L0,56 Z" fill="#eef2ee"/>
+          </svg>
+        </div>
+      </div>
+
+      {/* ══════════ CONTENT ══════════ */}
+      <div style={{ padding: "10px 15px 50px", maxWidth: 480, margin: "0 auto" }}>
+
+        {/* Search result */}
+        {compoundData && activeTab === "home" && (
+          <div style={{
+            marginBottom: 18, background: "#fff",
+            borderRadius: 20, overflow: "hidden",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.09)",
+            animation: "slideDown 0.38s ease both",
+          }}>
+            <div style={{
+              background: "linear-gradient(135deg,#2d5a3d,#1a3d2b)",
+              padding: "14px 16px",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ade80", boxShadow: "0 0 7px #4ade80" }} />
+                <span style={{ color: "#86efac", fontWeight: 700, fontSize: 12.5 }}>Compound Found</span>
+              </div>
+              {/* + / ★ button */}
+              <button className="plus-btn" onClick={() => isFav(compoundData) ? removeFav(compoundData.MolecularFormula) : addFav(compoundData)} style={{
+                width: 40, height: 40, borderRadius: 13,
+                background: isFav(compoundData) ? "#4ade80" : "rgba(255,255,255,0.15)",
+                border: "none", cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                transition: "all 0.2s", boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
+              }}>
+                <span style={{ fontSize: 20, color: isFav(compoundData) ? "#0a2010" : "#fff", lineHeight: 1 }}>
+                  {isFav(compoundData) ? "★" : "+"}
+                </span>
+              </button>
+            </div>
+            {[
+              { icon: "🏷️", label: "IUPAC Name", val: compoundData.IUPACName || compoundData.searchName || "Unknown" },
+              { icon: "⚗️", label: "Formula", val: compoundData.MolecularFormula },
+              { icon: "⚖️", label: "Mol. Weight", val: `${compoundData.MolecularWeight} g/mol` },
+            ].map((r, i) => (
+              <div key={r.label} style={{
+                display: "flex", alignItems: "center", gap: 13, padding: "12px 16px",
+                borderBottom: i < 2 ? "1px solid #f0f4f0" : "none",
+              }}>
+                <span style={{ fontSize: 17 }}>{r.icon}</span>
+                <div>
+                  <div style={{ color: "#adb5bd", fontSize: 9.5, fontWeight: 700, letterSpacing: 0.8, marginBottom: 2 }}>{r.label}</div>
+                  <div style={{ color: "#1a2e1a", fontSize: 14, fontWeight: 700, wordBreak: "break-all" }}>{r.val}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* HOME tab */}
+        {activeTab === "home" && (
+          <>
+            <p style={{ color: "#7a8e7a", fontSize: 10.5, fontWeight: 700, letterSpacing: 0.8, marginBottom: 9 }}>
+              QUICK SEARCH
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 20 }}>
+              {[
+                { label: "H₂O", q: "water" }, { label: "CO₂", q: "carbon dioxide" },
+                { label: "NaCl", q: "sodium chloride" }, { label: "NH₃", q: "ammonia" },
+                { label: "C₆H₁₂O₆", q: "glucose" }, { label: "CH₄", q: "methane" },
+                { label: "C₂H₅OH", q: "ethanol" },
+              ].map(({ label, q }) => (
+                <button key={label} className="chip" onClick={() => { setValue(q); handleSearch(q); }} style={{
+                  background: "rgba(45,90,61,0.10)", border: "1.5px solid rgba(45,90,61,0.18)",
+                  borderRadius: 20, padding: "6px 12px",
+                  color: "#2d5a3d", fontSize: 12, fontWeight: 700,
+                  cursor: "pointer", fontFamily: "monospace", transition: "all 0.2s",
+                }}>{label}</button>
+              ))}
+            </div>
+
+            {!compoundData && (
+              <div style={{
+                background: "#fff", borderRadius: 20, padding: "28px 18px",
+                textAlign: "center", boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
+              }}>
+                <div style={{ fontSize: 38, marginBottom: 10 }}>⚗️</div>
+                <div style={{ color: "#2d5a3d", fontWeight: 800, fontSize: 15, marginBottom: 6 }}>Start exploring</div>
+                <div style={{ color: "#9ca3af", fontSize: 13, lineHeight: 1.65 }}>
+                  Type a compound name or formula in the search bar, then tap Search.
+                </div>
+              </div>
+            )}
+
+            {/* Info footer */}
+            <div style={{ marginTop: 18, background: "#fff", borderRadius: 20, padding: "18px 16px", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 9 }}>
+                <img src={logo} alt="logo" style={{ width: 34, height: 34, borderRadius: 10, objectFit: "cover" }} />
+                <div>
+                  <div style={{ fontSize: 13.5, fontWeight: 800 }}>
+                    <span style={{ color: "#2d5a3d" }}>Chemix</span>
+                    <span style={{ color: "#1a6d4a" }}>Encyclopedia</span>
+                  </div>
+                  <div style={{ fontSize: 10, color: "#9ca3af" }}>by TimedCoder555 · Powered by PubChem</div>
+                </div>
+              </div>
+              <p style={{ color: "#6b7280", fontSize: 12.5, lineHeight: 1.7 }}>
+                Explore chemical compounds, molecular data and scientific chemistry resources in a futuristic interface.
+              </p>
+            </div>
+          </>
+        )}
+
+        {/* FAVORITES tab */}
+        {activeTab === "favorites" && (
+          <>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <p style={{ color: "#7a8e7a", fontSize: 10.5, fontWeight: 700, letterSpacing: 0.8 }}>
+                SAVED COMPOUNDS ({favorites.length})
+              </p>
+              {favorites.length > 0 && (
+                <button onClick={() => setFavorites([])} style={{
+                  background: "none", border: "none", color: "#ef4444", fontSize: 11, fontWeight: 700, cursor: "pointer",
+                }}>Clear all</button>
+              )}
+            </div>
+
+            {favorites.length === 0 ? (
+              <div style={{ background: "#fff", borderRadius: 20, padding: "36px 18px", textAlign: "center", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+                <div style={{ fontSize: 38, marginBottom: 10 }}>⭐</div>
+                <div style={{ color: "#2d5a3d", fontWeight: 800, fontSize: 15, marginBottom: 6 }}>No favorites yet</div>
+                <div style={{ color: "#9ca3af", fontSize: 13, lineHeight: 1.65 }}>
+                  Search a compound and tap <strong style={{ color: "#2d5a3d" }}>+</strong> to save it here.
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+                {favorites.map((fav, idx) => (
+                  <div key={fav.MolecularFormula} className="fav-card" style={{
+                    background: cardGrads[idx % cardGrads.length],
+                    borderRadius: 20,
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.13)",
+                    animation: "fadeUp 0.35s ease both",
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 16px" }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 3 }}>
+                          {fav.MolecularFormula}
+                        </div>
+                        <div style={{ color: "rgba(255,255,255,0.72)", fontSize: 12, marginBottom: 6, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "95%" }}>
+                          {fav.IUPACName || fav.searchName || "Unknown"}
+                        </div>
+                        <span style={{
+                          background: "rgba(255,255,255,0.16)", borderRadius: 10,
+                          padding: "2px 10px", color: "rgba(255,255,255,0.88)", fontSize: 11, fontWeight: 600,
+                        }}>
+                          {fav.MolecularWeight} g/mol
+                        </span>
+                      </div>
+                      {/* Big + button */}
+                      <button className="plus-btn" onClick={() => removeFav(fav.MolecularFormula)} style={{
+                        width: 54, height: 54, borderRadius: 16, flexShrink: 0, marginLeft: 12,
+                        background: "rgba(255,255,255,0.9)",
+                        border: "none", cursor: "pointer", transition: "all 0.2s",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        boxShadow: "0 4px 14px rgba(0,0,0,0.18)",
+                      }}>
+                        <span style={{ fontSize: 28, color: "#2d5a3d", lineHeight: 1, fontWeight: 300 }}>−</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
 };
+
+// constant needed inside component scope
+const cardGrads = [
+  "linear-gradient(135deg, #2d5a3d 0%, #1a3d2b 100%)",
+  "linear-gradient(135deg, #2d3d5a 0%, #1a2b3d 100%)",
+  "linear-gradient(135deg, #5a3d2d 0%, #3d2b1a 100%)",
+  "linear-gradient(135deg, #4a3d20 0%, #2b2010 100%)",
+  "linear-gradient(135deg, #3d2d5a 0%, #2b1a3d 100%)",
+  "linear-gradient(135deg, #1a4a3a 0%, #0d2d22 100%)",
+  "linear-gradient(135deg, #5a2d3d 0%, #3d1a2b 100%)",
+];
 
 export default Main;
