@@ -16,7 +16,7 @@ function App() {
   return (
     <div className="app-container">
 
-      {/* TOP HEADER ONLY (NO NAV LINKS) */}
+      {/* TOP HEADER */}
       <header className="top-bar">
 
         <div className="brand">
@@ -59,12 +59,13 @@ function App() {
         </p>
       </section>
 
-      {/* MAIN APP */}
+      {/* MAIN CONTENT */}
       <div className="main-content">
         <Main />
       </div>
 
-      );
+    </div>
+  );
 }
 
 export default App;
