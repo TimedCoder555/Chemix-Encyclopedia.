@@ -1,52 +1,51 @@
 import React from "react";
 import "./App.css";
 
-import bgImage from "./img/chem-bg.jpg";
 import logo from "./img/logo.png";
-
 import Main from "./components/main";
 
 function App() {
-  return (
-   <div
-  className="app-container"
-  style={{
-    minHeight: "100vh",
-    backgroundImage: `url(${bgImage})`,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    backgroundRepeat: "no-repeat",
-  }}
-> 
-      {/* NAVBAR */}
 
-      <nav className="navbar">
+  const openReport = () => {
+    window.open(
+      "https://github.com/YOUR_USERNAME/YOUR_REPO/issues",
+      "_blank"
+    );
+  };
+
+  return (
+    <div className="app-container">
+
+      {/* TOP HEADER ONLY (NO NAV LINKS) */}
+      <header className="top-bar">
 
         <div className="brand">
-
           <img src={logo} alt="logo" className="logo" />
 
           <div>
             <h1>Chemix-Encyclopedia</h1>
 
-            <p>by Timedcoder</p>
-          </div>
+            <div className="sub-row">
 
+              <span className="timedcoder">
+                TimedCoder
+              </span>
+
+              <button
+                className="report-btn"
+                onClick={openReport}
+              >
+                REPORT HERE
+              </button>
+
+            </div>
+          </div>
         </div>
 
-        <ul className="nav-links">
-          <li>HOME</li>
-          <li>ELEMENTS</li>
-          <li>MOLECULES</li>
-          <li>ABOUT</li>
-        </ul>
-
-      </nav>
+      </header>
 
       {/* HERO SECTION */}
-
       <section className="hero">
-
         <h2>
           “Chemistry is the poetry
           <br />
@@ -58,14 +57,22 @@ function App() {
           reactions and molecular structures
           in a futuristic chemistry experience.
         </p>
-
       </section>
 
       {/* MAIN APP */}
-
       <div className="main-content">
         <Main />
       </div>
+
+      {/* BOTTOM NAV ONLY */}
+      <nav className="bottom-nav">
+
+        <div className="nav-item active">HOME</div>
+        <div className="nav-item">ELEMENTS</div>
+        <div className="nav-item">MOLECULES</div>
+        <div className="nav-item">ABOUT</div>
+
+      </nav>
 
     </div>
   );
