@@ -200,7 +200,7 @@ function App() {
 
           {/* Center */}
           <div style={{ color:"rgba(255,255,255,0.45)", fontSize:12.5, textAlign:"center" }}>
-            © 2024 Chemix Encyclopedia. All rights reserved.
+            © 2026 Chemix Encyclopedia. All rights reserved.
           </div>
 
           {/* Right — social icons */}
