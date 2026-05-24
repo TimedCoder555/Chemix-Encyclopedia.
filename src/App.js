@@ -132,7 +132,7 @@ function App() {
               {[
                 { icon:"⬡", label:"GitHub",  value:"github.com/TimedCoder555",     href:"https://github.com/TimedCoder555" },
                 { icon:"◈", label:"Discord", value:"discord.gg/TqV9BjSP",          href:"https://discord.gg/TqV9BjSP" },
-                { icon:"✉", label:"Email",   value:"timedcoder555@gmail.com",       href:"mailto:timedcoder555@gmail.com" },
+                { icon:"✉", label:"X-box",   value:"coming soon",       href:"https://github.com/TimedCoder555" },
                 { icon:"🌐", label:"Website", value:"Coming Soon...",               href:null },
               ].map(link => (
                 <div key={link.label} style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
