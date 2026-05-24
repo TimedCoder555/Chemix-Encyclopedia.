@@ -64,18 +64,5 @@ function App() {
         <Main />
       </div>
 
-      {/* BOTTOM NAV ONLY */}
-      <nav className="bottom-nav">
-
-        <div className="nav-item active">HOME</div>
-        <div className="nav-item">ELEMENTS</div>
-        <div className="nav-item">MOLECULES</div>
-        <div className="nav-item">ABOUT</div>
-
-      </nav>
-
-    </div>
-  );
-}
-
+      
 export default App;
