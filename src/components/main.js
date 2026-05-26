@@ -274,6 +274,7 @@ const Main = () => {
   const [loading, setLoading]     = useState(false);
   const [activeTab, setActiveTab] = useState("home");
   const [showAbout, setShowAbout] = useState(false);
+const [showAI, setShowAI] = useState(false);
   const [navPage, setNavPage]     = useState("home");
   const [favorites, setFavorites] = useState(() => {
     try { return JSON.parse(localStorage.getItem("chemix_favorites") || "[]"); }
