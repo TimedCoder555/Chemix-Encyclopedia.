@@ -1,92 +1,100 @@
-# Chemix-Encyclopedia
+# 🧪 Chemix-Encyclopedia.
 
-Welcome to **Chemix-Encyclopedia** 🧪
+Chemix-Encyclopedia is a futuristic chemistry exploration app built for students, researchers, developers, and science lovers.  
+Explore more than **100 Million+ chemical compounds** with a modern cyber-neon mobile UI powered by the PubChem database.
 
-This project is an educational chemistry-based web application created to help users explore chemical elements, reactions, formulas, and scientific concepts in a simple and interactive way.
+━━━━━━━━━━━━━━━━━━
+✨ FEATURES
+━━━━━━━━━━━━━━━━━━
 
-## Project Information
+• 🔍 Real-time compound search  
+• ⚗️ Molecular Formula detection  
+• 🧬 IUPAC Name support  
+• 🧪 Common/Normal Compound Names  
+• ⚖️ Molecular Weight information  
+• ⭐ Favorite compounds system  
+• 📱 Mobile optimized futuristic UI  
+• 🌈 Animated neon interface  
+• 🧠 Smart chemistry exploration  
+• 📚 100M+ compound database  
+• 🚀 Fast search experience  
+• 🧊 Glassmorphism design  
+• 🌌 Cyber chemistry aesthetic  
 
-- **Project Name:** Chemix-Encyclopedia
-- **Owner:** timedcoder
-- **Type:** React Web Application
-- **Platform:** Web
+━━━━━━━━━━━━━━━━━━
+🧬 TECHNOLOGY
+━━━━━━━━━━━━━━━━━━
 
----
+• React.js  
+• PubChem API  
+• Modern CSS Animations  
+• Responsive Mobile UI  
 
-## Features
-
-- Interactive chemistry learning experience
-- Educational scientific information
-- Simple and responsive interface
-- Fast loading React-based system
-- Beginner-friendly navigation
-
----
-
-## Available Scripts
-
-In the project directory, you can run:
-
-### `npm start`
-
-Runs the app in development mode.
-
-Open:
-
-http://localhost:3000
-
-to view it in the browser.
-
----
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.
-
----
-
-### `npm test`
-
-Launches the test runner in interactive watch mode.
-
----
-
-## Installation
+━━━━━━━━━━━━━━━━━━
+🚀 INSTALLATION
+━━━━━━━━━━━━━━━━━━
 
 Clone the repository:
 
-git clone https://github.com/yourusername/Chemix-Encyclopedia.git
+```bash
+git clone https://github.com/TimedCoder555/Chemix-Encyclopedia..git
+```
 
-Go to the project folder:
+Go to project folder:
 
-`cd Chemix-Encyclopedia`
+```bash
+cd Chemix-Encyclopedia.
+```
 
 Install dependencies:
 
-`npm install`
+```bash
+npm install --legacy-peer-deps
+```
 
-Start the project:
+Start development server:
 
-`npm start`
+```bash
+npm start
+```
 
----
+Build production version:
 
-## Technologies Used
+```bash
+npm run build
+```
 
-- React JS
-- JavaScript
-- HTML5
-- CSS3
-- Node.js
+━━━━━━━━━━━━━━━━━━
+🌐 LIVE WEBSITE
+━━━━━━━━━━━━━━━━━━
 
----
+https://chemix-encyclopediaa.netlify.app/
 
-## Notes
+━━━━━━━━━━━━━━━━━━
+🐞 REPORT BUGS
+━━━━━━━━━━━━━━━━━━
 
-This project is made for educational and learning purposes.
+Found a bug or issue?
 
----
+Report here:
 
-## Owner
+https://github.com/TimedCoder555/Chemix-Encyclopedia./issues
 
-Developed and maintained by **timedcoder**
+━━━━━━━━━━━━━━━━━━
+👨‍💻 DEVELOPER
+━━━━━━━━━━━━━━━━━━
+
+GitHub: https://github.com/TimedCoder555  
+Discord: https://discord.gg/TqV9BjSP
+
+━━━━━━━━━━━━━━━━━━
+🌿 VISION
+━━━━━━━━━━━━━━━━━━
+
+Making chemistry exploration futuristic, beautiful, and accessible for everyone.
+
+━━━━━━━━━━━━━━━━━━
+💚 MADE BY
+━━━━━━━━━━━━━━━━━━
+
+TimedCoder555
