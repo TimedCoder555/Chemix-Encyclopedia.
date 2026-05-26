@@ -3,6 +3,13 @@
 Chemix-Encyclopedia is a futuristic chemistry exploration app built for students, researchers, developers, and science lovers.  
 Explore more than **100 Million+ chemical compounds** with a modern cyber-neon mobile UI powered by the PubChem database.
 
+![Chemix Banner](https://img.shields.io/badge/Chemix-Encyclopedia-00ffb3?style=for-the-badge)
+![React](https://img.shields.io/badge/React-18-blue?style=for-the-badge&logo=react)
+![API](https://img.shields.io/badge/PubChem-API-green?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Active-success?style=for-the-badge)
+
+---
+
 ━━━━━━━━━━━━━━━━━━
 ✨ FEATURES
 ━━━━━━━━━━━━━━━━━━
