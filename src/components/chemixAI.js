@@ -1,14 +1,35 @@
 // ═══════════════════════════════════════════════════════
-// chemixAI.js — Chemix AI Brain (FIXED + CLEAN VERSION)
+// chemixAI.js — Chemix AI Brain (FIXED + CLEAN)
 // ═══════════════════════════════════════════════════════
 
 import { detectFormula } from "./chemixParser";
-import { searchInternet } from "./internetSearch";
+
+// ─────────────────────────────────────────────
+// INTERNET SEARCH
+// ─────────────────────────────────────────────
+export const searchInternet = async (query) => {
+  try {
+    const res = await fetch(
+      `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1`
+    );
+
+    const data = await res.json();
+
+    return (
+      data?.AbstractText ||
+      data?.Answer ||
+      data?.Definition ||
+      null
+    );
+  } catch (e) {
+    return null;
+  }
+};
 
 // ─────────────────────────────────────────────
 // REGEX
 // ─────────────────────────────────────────────
-const GREETING_REGEX = /^(hi+|hello+|hey+|heyy+|hii+|helo+|heya|yo+|ayo|sup)\b/i;
+const GREETING_REGEX = /^(hi+|hello+|hey+|heyy+|hii+|yo+|ayo|sup)\b/i;
 const HOW_ARE_YOU_REGEX = /how (r|are) (u|you)|kemon acho|kaisa ho/i;
 const NAME_REGEX = /who (are|r) you|your name|introduce yourself/i;
 const THANKS_REGEX = /^(thanks|thank you|thx|ty|tysm)\b/i;
@@ -18,14 +39,18 @@ const HELP_REGEX = /help|how to use/i;
 const FEATURE_REGEX = /features|what can you do/i;
 
 // ─────────────────────────────────────────────
-// CHEMISTRY CHECK
+// CHEMISTRY KEYWORDS
 // ─────────────────────────────────────────────
 const CHEMISTRY_KEYWORDS = [
   "h2o","co2","nacl","nh3","ch4","hcl","h2so4","naoh","h2o2",
   "hydrogen","oxygen","nitrogen","carbon","iron","gold",
-  "atom","molecule","compound","bond","reaction","chemistry","acid","base","formula"
+  "atom","molecule","compound","bond","reaction","chemistry",
+  "acid","base","formula","fe2o3","ferric oxide"
 ];
 
+// ─────────────────────────────────────────────
+// CHEMISTRY CHECK (FIXED ⚡)
+// ─────────────────────────────────────────────
 export const isChemistryQuestion = (text = "") => {
   const low = text
     .toLowerCase()
@@ -46,10 +71,10 @@ export const isChemistryQuestion = (text = "") => {
 // KB
 // ─────────────────────────────────────────────
 const KB = [
-  { k:["h2o","water"], a:"💧 Water (H₂O) — Universal solvent, essential for life." },
-  { k:["co2","carbon dioxide"], a:"🌿 CO₂ — Greenhouse gas used in photosynthesis." },
-  { k:["nacl","salt"], a:"🧂 NaCl — Sodium + Chloride ionic compound." },
-  { k:["iron","fe2o3","ferric oxide"], a:"🧲 Fe₂O₃ — Ferric oxide (rust compound)." },
+  { k: ["h2o", "water"], a: "💧 Water (H₂O) — Universal solvent, essential for life." },
+  { k: ["co2", "carbon dioxide"], a: "🌿 CO₂ — Greenhouse gas used in photosynthesis." },
+  { k: ["nacl", "salt"], a: "🧂 NaCl — Sodium + Chloride ionic compound." },
+  { k: ["iron", "fe2o3", "ferric oxide"], a: "🧲 Fe₂O₃ — Ferric oxide (rust compound)." },
 ];
 
 // ─────────────────────────────────────────────
@@ -57,6 +82,7 @@ const KB = [
 // ─────────────────────────────────────────────
 export const getKBAnswer = (q = "") => {
   const text = q.toLowerCase();
+
   for (const item of KB) {
     if (item.k.some(k => text.includes(k))) {
       return item.a;
@@ -103,6 +129,7 @@ export const getGreetingAnswer = (q = "") => {
 // ─────────────────────────────────────────────
 export const isGreeting = (q = "") => {
   const t = q.toLowerCase();
+
   return (
     GREETING_REGEX.test(t) ||
     HOW_ARE_YOU_REGEX.test(t) ||
@@ -116,11 +143,9 @@ export const isGreeting = (q = "") => {
 };
 
 // ─────────────────────────────────────────────
-// AI (SAFE VERSION)
+// AI CALL (FIXED)
 // ─────────────────────────────────────────────
 export const askClaudeWithSearch = async (question, compoundContext) => {
-  
-
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12000);
 
@@ -134,7 +159,8 @@ export const askClaudeWithSearch = async (question, compoundContext) => {
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 800,
-        system: "You are Chemix AI. Keep answers short and chemistry focused.",
+        system: `You are Chemix AI. Keep answers short and chemistry focused.
+${compoundContext ? `Context: ${compoundContext}` : ""}`,
         messages: [{ role: "user", content: question }],
       }),
     });
@@ -146,7 +172,7 @@ export const askClaudeWithSearch = async (question, compoundContext) => {
     return (data?.content || [])
       .filter(b => b.type === "text")
       .map(b => b.text)
-      .join("\n");
+      .join("\n") || null;
 
   } catch (e) {
     clearTimeout(timeout);
@@ -155,12 +181,12 @@ export const askClaudeWithSearch = async (question, compoundContext) => {
 };
 
 // ─────────────────────────────────────────────
-// MAIN FUNCTION
+// MAIN FUNCTION (FIXED FLOW)
 // ─────────────────────────────────────────────
 export const getChemixAIReply = async (question, compoundContext) => {
   const q = (question || "").trim();
 
-  // 1. FAST GREETING ⚡
+  // 1. GREETING ⚡
   const greet = getGreetingAnswer(q);
   if (greet) {
     return { text: greet, source: "greeting" };
@@ -181,44 +207,4 @@ export const getChemixAIReply = async (question, compoundContext) => {
     return { text: kb, source: "kb" };
   }
 
-  // 4. INTERNET SEARCH 🌐
-  try {
-    const web = await searchInternet(q);
-    if (web) {
-      return {
-        text: `🌐 Internet:\n\n${web}`,
-        source: "internet",
-      };
-    }
-  } catch (e) {}
-
-  // 5. AI fallback 🤖
-  try {
-    const ai = await askClaudeWithSearch(q, compoundContext);
-    if (ai) return { text: ai, source: "ai" };
-  } catch (e) {}
-
-  // 6. FINAL fallback
-  return {
-    text:
-      "🧪 Try simpler chemistry terms:\nH2O, NaCl, Fe2O3, CO2 ⚗️",
-    source: "offline",
-  };
-};
-
-// ─────────────────────────────────────────────
-// INTERNET SEARCH MODULE (SAFE)
-// ─────────────────────────────────────────────
-export const searchInternet = async (query) => {
-  try {
-    const res = await fetch(
-      `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json`
-    );
-
-    const data = await res.json();
-
-    return data?.AbstractText || data?.Definition || data?.Answer || null;
-  } catch (e) {
-    return null;
-  }
-};
+  // 4.
