@@ -155,34 +155,47 @@ export const askClaudeWithSearch = async (question, compoundContext) => {
 export const getChemixAIReply = async (question, compoundContext) => {
   const q = (question || "").trim();
 
-  // 1. Greeting (FAST)
+  // 1. Greeting (instant)
   if (isGreeting(q)) {
     return { text: getGreetingAnswer(q), source: "greeting" };
   }
 
-  // 2. KB (FAST)
+  // 2. Formula detection (NEW ⚡)
+  const formula = detectFormula(q);
+  if (formula) {
+    return {
+      text: `🧪 Detected Formula: ${formula}\n\n⚗️ This is a chemical compound. Let me analyze it or search details...`,
+      source: "formula"
+    };
+  }
+
+  // 3. Local KB (fast)
   const kb = getKBAnswer(q);
   if (kb) {
     return { text: kb, source: "kb" };
   }
 
-  // 3. Not chemistry
-  if (!isChemistryQuestion(q)) {
-    return {
-      text: "🧪 I'm a chemistry-focused AI! Ask chemistry questions only.",
-      source: "offline"
-    };
-  }
-
-  // 4. AI
+  // 4. INTERNET SEARCH (REAL WEB DATA)
   try {
-    const reply = await askClaudeWithSearch(q, compoundContext);
-    if (reply) return { text: reply, source: "claude" };
+    const webResult = await searchInternet(q);
+
+    if (webResult) {
+      return {
+        text: `🌐 Internet Result:\n\n${webResult}`,
+        source: "internet"
+      };
+    }
   } catch (e) {}
 
-  // 5. fallback
+  // 5. AI fallback (optional)
+  try {
+    const ai = await askClaudeWithSearch(q, compoundContext);
+    if (ai) return { text: ai, source: "ai" };
+  } catch (e) {}
+
+  // 6. final fallback
   return {
-    text: "🔬 Try asking about H₂O, CO₂, NaCl, pH, atoms ⚗️",
+    text: "🧪 I couldn't find exact info. Try simpler chemistry terms like H2O, NaCl, Fe2O3 ⚗️",
     source: "offline"
   };
 };
