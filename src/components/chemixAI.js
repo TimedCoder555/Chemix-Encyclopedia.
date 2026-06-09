@@ -27,7 +27,18 @@ const CHEMISTRY_KEYWORDS = [
 ];
 
 export const isChemistryQuestion = (text = "") => {
-  const low = text.toLowerCase();
+  const low = text
+    .toLowerCase()
+    .replace(/₂/g, "2")
+    .replace(/₃/g, "3")
+    .replace(/₄/g, "4")
+    .replace(/₅/g, "5")
+    .replace(/₆/g, "6")
+    .replace(/₇/g, "7")
+    .replace(/₈/g, "8")
+    .replace(/₉/g, "9")
+    .replace(/₀/g, "0");
+
   return CHEMISTRY_KEYWORDS.some(k => low.includes(k));
 };
 
