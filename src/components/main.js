@@ -235,6 +235,15 @@ const ChemixAIModal = ({ onClose, compoundData }) => {
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     }]);
     setThinking(true);
+const chemixReply = await getChemixAIReply(q, compoundData);
+
+if (chemixReply && chemixReply.text) {
+  await new Promise(r => setTimeout(r, 600));
+  addAIMessage(chemixReply.text);
+  setThinking(false);
+  isSending.current = false;
+  return;
+}
 
     // 1. Try local knowledge base first (instant, no network needed)
     const localAnswer = getLocalAnswer(q);
