@@ -112,6 +112,16 @@ export const isGreeting = (q = "") => {
 // ── Claude API ───────────────────────────────────────
 export const askClaudeWithSearch = async (question, compoundContext) => {
 
+export const searchInternet = async (query) => {
+  const res = await fetch(
+    `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json`
+  );
+
+  const data = await res.json();
+
+  return data?.AbstractText || data?.Definition || null;
+};
+
   if (!isChemistryQuestion(question)) {
     throw new Error("Not chemistry");
   }
