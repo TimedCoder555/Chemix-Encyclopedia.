@@ -3,6 +3,9 @@
 // ═══════════════════════════════════════════════════════
 
 // ── Regex ───────────────────────────────────────────────
+import { detectFormula } from "./chemixParser";
+import { searchInternet } from "./chemixParser";
+
 const GREETING_REGEX = /^(hi+|hello+|hey+|heyy+|hii+|helo+|heya|howdy|sup|yo+|ayo|wassup|wsp|hola|namaste|salam|hiii+|hewwo|hewwoo)\b/i;
 
 const HOW_ARE_YOU_REGEX = /how (r|are) (u|you)|hows it|how's it|u ok|you ok|kemon acho|kemon|kaisa ho/i;
