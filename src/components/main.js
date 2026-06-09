@@ -51,30 +51,104 @@ const safeJson = async (res) => {
 // (used when Anthropic API is unavailable in browser)
 // ─────────────────────────────────────────────
 const LOCAL_ANSWERS = [
-  { keys: ["h2o","water","h₂o"], answer: "💧 **Water (H₂O)** is the universal solvent. It's a polar molecule with a bent shape, boiling point 100°C, and essential for all life on Earth. It has a high specific heat capacity which helps regulate temperature." },
-  { keys: ["co2","carbon dioxide","co₂"], answer: "🌿 **Carbon Dioxide (CO₂)** is a linear triatomic molecule. It's produced by combustion and respiration, used in photosynthesis, and is a major greenhouse gas. Molecular weight: 44.01 g/mol." },
-  { keys: ["nacl","sodium chloride","salt","table salt"], answer: "🧂 **Sodium Chloride (NaCl)** is an ionic compound formed by Na⁺ and Cl⁻ ions. It's common table salt, melts at 801°C, and is essential for biological functions." },
-  { keys: ["nh3","ammonia","nh₃"], answer: "🌱 **Ammonia (NH₃)** has a trigonal pyramidal shape. It's a key component in fertilizers, produced by the Haber process, and is an important industrial chemical with a pungent smell." },
-  { keys: ["ch4","methane","ch₄"], answer: "🔥 **Methane (CH₄)** is the simplest hydrocarbon with tetrahedral geometry. It's the main component of natural gas, a potent greenhouse gas, and used as fuel worldwide." },
-  { keys: ["glucose","c6h12o6","c₆h₁₂o₆"], answer: "⚡ **Glucose (C₆H₁₂O₆)** is the primary energy source for cells. It's broken down in glycolysis and cellular respiration to produce ATP. Molecular weight: 180.16 g/mol." },
-  { keys: ["ethanol","c2h5oh","alcohol","c₂h₅oh"], answer: "🧪 **Ethanol (C₂H₅OH)** is a 2-carbon alcohol. It's used in beverages, disinfectants, and fuel. Boiling point: 78.37°C. It acts as a CNS depressant in the human body." },
-  { keys: ["ph","ph scale"], answer: "⚗️ **pH** measures acidity/basicity on a 0–14 scale. pH < 7 = acidic, pH 7 = neutral, pH > 7 = basic. It's the negative log of hydrogen ion concentration: pH = -log[H⁺]." },
-  { keys: ["ionic bond","ionic"], answer: "⚡ **Ionic bonds** form between metals and non-metals through electron transfer. The resulting ions are held together by electrostatic attraction. Example: NaCl (Na⁺ + Cl⁻)." },
-  { keys: ["covalent bond","covalent"], answer: "🔗 **Covalent bonds** form when atoms share electron pairs. They occur between non-metal atoms. Example: H₂O, where oxygen shares electrons with two hydrogen atoms." },
-  { keys: ["periodic table","elements"], answer: "📊 The **Periodic Table** organizes 118 elements by atomic number. Elements in the same group share similar properties. Periods represent electron shells. Created by Mendeleev in 1869." },
-  { keys: ["atom","atoms"], answer: "⚛️ An **atom** is the smallest unit of an element. It consists of a nucleus (protons + neutrons) surrounded by electrons. Proton count = atomic number = element identity." },
-  { keys: ["molecule","molecules"], answer: "🔬 A **molecule** is two or more atoms bonded together. It can be a single element (O₂) or a compound (H₂O). Molecules are the smallest unit that retains chemical properties." },
-  { keys: ["acid","acids"], answer: "🧪 **Acids** donate protons (H⁺) in solution (Brønsted-Lowry definition). Strong acids (HCl, H₂SO₄) fully dissociate. Weak acids (CH₃COOH) partially dissociate. pH < 7." },
-  { keys: ["base","bases","alkali"], answer: "🔵 **Bases** accept protons or donate OH⁻ ions. Strong bases (NaOH) fully dissociate. They feel slippery, taste bitter, and have pH > 7. React with acids in neutralization." },
-  { keys: ["organic chemistry","organic"], answer: "🌿 **Organic chemistry** studies carbon-containing compounds. Carbon's ability to form 4 bonds creates millions of compounds including proteins, fats, DNA, and medicines." },
-  { keys: ["molar mass","molecular weight"], answer: "⚖️ **Molar mass** is the mass of one mole (6.022×10²³ particles) of a substance in g/mol. It equals the sum of atomic masses. Example: H₂O = 2(1) + 16 = 18 g/mol." },
-  { keys: ["reaction","chemical reaction"], answer: "⚗️ A **chemical reaction** transforms reactants into products by breaking and forming chemical bonds. Types include synthesis, decomposition, single/double displacement, and redox reactions." },
+  // ── Common molecules ──
+  { keys: ["h2o","water","h₂o"], answer: "💧 **Water (H₂O)** is the universal solvent. Polar molecule, bent shape (104.5°), BP 100°C, MW 18.02 g/mol. Essential for all life on Earth." },
+  { keys: ["co2","carbon dioxide","co₂"], answer: "🌿 **Carbon Dioxide (CO₂)** is a linear triatomic molecule. MW 44.01 g/mol. Produced by combustion & respiration, used in photosynthesis, major greenhouse gas." },
+  { keys: ["n2","nitrogen gas","n₂","dinitrogen"], answer: "🔵 **Nitrogen gas (N₂)** makes up ~78% of Earth's atmosphere. It has a very strong triple bond (N≡N), MW 28.02 g/mol. Colorless, odorless, and mostly inert at room temperature. Used in food packaging and as a coolant (liquid N₂ = -196°C)." },
+  { keys: ["o2","oxygen gas","o₂","dioxygen"], answer: "🔴 **Oxygen gas (O₂)** makes up ~21% of Earth's atmosphere. MW 32.00 g/mol. Essential for respiration and combustion. Has a double bond (O=O). Liquid oxygen (LOX) is used in rocket fuel." },
+  { keys: ["nacl","sodium chloride","salt","table salt"], answer: "🧂 **Sodium Chloride (NaCl)** is an ionic compound (Na⁺ + Cl⁻). MW 58.44 g/mol. MP 801°C. Common table salt, essential for biological fluid balance." },
+  { keys: ["nh3","ammonia","nh₃"], answer: "🌱 **Ammonia (NH₃)** has a trigonal pyramidal shape. MW 17.03 g/mol. Key in fertilizers (Haber process). BP -33°C. Pungent smell, weak base (pH ~11 in solution)." },
+  { keys: ["ch4","methane","ch₄"], answer: "🔥 **Methane (CH₄)** is the simplest alkane, tetrahedral geometry. MW 16.04 g/mol. Main component of natural gas. BP -161°C. Potent greenhouse gas (25× CO₂ over 100 years)." },
+  { keys: ["glucose","c6h12o6","c₆h₁₂o₆"], answer: "⚡ **Glucose (C₆H₁₂O₆)** is the primary cellular energy source. MW 180.16 g/mol. Broken down in glycolysis → ATP production. Blood sugar level is measured in mg/dL." },
+  { keys: ["ethanol","c2h5oh","c₂h₅oh","ethyl alcohol"], answer: "🧪 **Ethanol (C₂H₅OH)** is a 2-carbon alcohol. MW 46.07 g/mol. BP 78.37°C. Used in beverages, disinfectants, and biofuel. CNS depressant." },
+  { keys: ["hcl","hydrochloric acid"], answer: "⚗️ **Hydrochloric acid (HCl)** is a strong acid that fully dissociates: HCl → H⁺ + Cl⁻. MW 36.46 g/mol. Found in stomach acid (gastric acid). Highly corrosive." },
+  { keys: ["h2so4","sulfuric acid","sulphuric acid"], answer: "⚠️ **Sulfuric acid (H₂SO₄)** is the most produced industrial chemical. MW 98.08 g/mol. Strong diprotic acid. Used in batteries, fertilizers, and chemical synthesis. Highly corrosive." },
+  { keys: ["hno3","nitric acid"], answer: "🔶 **Nitric acid (HNO₃)** is a strong oxidizing acid. MW 63.01 g/mol. Used in fertilizer production (via Ostwald process) and explosives. Forms yellow stains on skin." },
+  { keys: ["naoh","sodium hydroxide","caustic soda","lye"], answer: "🔵 **Sodium Hydroxide (NaOH)** is a strong base. MW 40.00 g/mol. Fully dissociates: NaOH → Na⁺ + OH⁻. Used in soap making, paper production, and drain cleaners." },
+  { keys: ["h2o2","hydrogen peroxide"], answer: "💊 **Hydrogen Peroxide (H₂O₂)** is a mild antiseptic. MW 34.01 g/mol. Decomposes to H₂O + O₂. Used as a bleaching agent, disinfectant, and rocket propellant in high concentration." },
+  { keys: ["co","carbon monoxide"], answer: "⚠️ **Carbon Monoxide (CO)** is a colorless, odorless toxic gas. MW 28.01 g/mol. Binds to hemoglobin 200× stronger than O₂, causing CO poisoning. Produced by incomplete combustion." },
+  { keys: ["so2","sulfur dioxide"], answer: "🌫️ **Sulfur Dioxide (SO₂)** is a pungent toxic gas. MW 64.06 g/mol. Produced by burning fossil fuels. Causes acid rain (SO₂ + H₂O → H₂SO₃). Used as a food preservative (E220)." },
+  { keys: ["o3","ozone","o₃"], answer: "🌍 **Ozone (O₃)** is a triatomic oxygen molecule. MW 48.00 g/mol. In the stratosphere, it absorbs harmful UV radiation. At ground level, it's a pollutant. Produced by lightning and UV light." },
+  { keys: ["ch3cooh","acetic acid","ethanoic acid","vinegar"], answer: "🍶 **Acetic acid (CH₃COOH)** is a weak organic acid. MW 60.05 g/mol. IUPAC: ethanoic acid. BP 118°C. Main component of vinegar (~5%). Used in chemical synthesis." },
+  { keys: ["c6h6","benzene","c₆h₆"], answer: "🔵 **Benzene (C₆H₆)** is an aromatic hydrocarbon. MW 78.11 g/mol. Planar hexagonal ring with delocalized electrons. Known carcinogen. Important solvent and precursor in chemical industry." },
+  { keys: ["c2h2","acetylene","ethyne"], answer: "🔥 **Acetylene (C₂H₂)** is the simplest alkyne with a triple bond (C≡C). MW 26.04 g/mol. Burns at ~3500°C — used in oxyacetylene welding. Also a plant hormone (ripens fruit)." },
+  { keys: ["c3h8","propane","lpg"], answer: "⛽ **Propane (C₃H₈)** is a 3-carbon alkane. MW 44.10 g/mol. BP -42°C. Main component of LPG (liquefied petroleum gas). Used for heating, cooking, and as vehicle fuel." },
+  { keys: ["sucrose","c12h22o11","table sugar","cane sugar"], answer: "🍬 **Sucrose (C₁₂H₂₂O₁₁)** is common table sugar. MW 342.30 g/mol. A disaccharide made of glucose + fructose. Produced by sugarcane and sugar beets. Calorific value: ~4 kcal/g." },
+  { keys: ["urea","ch4n2o","carbamide"], answer: "🌿 **Urea (CH₄N₂O)** is the most produced nitrogen fertilizer. MW 60.06 g/mol. Produced in the liver (urea cycle) and excreted in urine. Used in plastics and as a skin moisturizer." },
+  { keys: ["aspirin","c9h8o4","acetylsalicylic acid"], answer: "💊 **Aspirin (C₉H₈O₄)** — IUPAC: acetylsalicylic acid. MW 180.16 g/mol. Analgesic, antipyretic, anti-inflammatory. Inhibits COX enzymes, reducing prostaglandin synthesis." },
+
+  // ── Elements ──
+  { keys: ["hydrogen","element h"], answer: "⚛️ **Hydrogen (H)** — Atomic № 1, lightest element. Most abundant in universe. Forms H₂ gas. Used in fuel cells, ammonia production. Explosive when mixed with air." },
+  { keys: ["oxygen","element o"], answer: "🔴 **Oxygen (O)** — Atomic № 8, MW 16. ~21% of atmosphere. Essential for respiration and combustion. Highly reactive, forms oxides with most elements." },
+  { keys: ["carbon","element c"], answer: "⬛ **Carbon (C)** — Atomic № 6. Basis of all organic chemistry. Forms diamond (hardest natural), graphite (soft), and fullerenes. Can form 4 bonds — creates millions of compounds." },
+  { keys: ["nitrogen","element n"], answer: "🔵 **Nitrogen (N)** — Atomic № 7. 78% of atmosphere. Essential for proteins and DNA (amino acids, nucleotides). Triple bond in N₂ makes it very stable and mostly inert." },
+  { keys: ["sodium","element na","na element"], answer: "🟡 **Sodium (Na)** — Atomic № 11, MW 22.99. Soft silvery metal. Reacts violently with water: 2Na + 2H₂O → 2NaOH + H₂. Essential electrolyte. Part of NaCl (table salt)." },
+  { keys: ["chlorine","element cl","cl element"], answer: "🟢 **Chlorine (Cl)** — Atomic № 17. Toxic yellow-green gas. Strong oxidizer. Used in water purification, PVC production, and bleach. Forms Cl₂ gas and HCl acid." },
+  { keys: ["iron","fe","element fe"], answer: "⚙️ **Iron (Fe)** — Atomic № 26. Most used metal. Forms steel (Fe + C alloy). Rusts (Fe₂O₃·H₂O). Essential in hemoglobin (carries O₂ in blood). Earth's core is mostly iron." },
+  { keys: ["gold","au","element au"], answer: "🥇 **Gold (Au)** — Atomic № 79. Noble metal, does not rust or corrode. Excellent conductor. Used in jewelry, electronics, and currency. Density: 19.3 g/cm³." },
+  { keys: ["silver","ag","element ag"], answer: "⚪ **Silver (Ag)** — Atomic № 47. Best electrical conductor of all metals. Used in jewelry, electronics, and photography. Has antibacterial properties. Tarnishes to Ag₂S." },
+  { keys: ["copper","cu","element cu"], answer: "🟤 **Copper (Cu)** — Atomic № 29. Excellent conductor, used in electrical wiring. Forms green patina (Cu₂(OH)₂CO₃). Essential trace element in humans. Alloys: bronze (Cu+Sn), brass (Cu+Zn)." },
+  { keys: ["calcium","ca","element ca"], answer: "🦴 **Calcium (Ca)** — Atomic № 20. Most abundant mineral in human body. Essential for bones and teeth (Ca₃(PO₄)₂). Reacts with water. Found in limestone (CaCO₃)." },
+  { keys: ["potassium","k","element k","kalium"], answer: "🔋 **Potassium (K)** — Atomic № 19. Soft silvery metal. Essential electrolyte (nerve signals, heart rhythm). Very reactive with water. Found in bananas and potassium chloride (KCl)." },
+  { keys: ["magnesium","mg","element mg"], answer: "✨ **Magnesium (Mg)** — Atomic № 12. Lightweight metal, burns with brilliant white flame. Center of chlorophyll molecule in plants. Essential for >300 enzyme reactions in humans." },
+  { keys: ["phosphorus","p","element p"], answer: "🔶 **Phosphorus (P)** — Atomic № 15. Essential for DNA, RNA, ATP, and cell membranes (phospholipids). White phosphorus is highly reactive. Used in fertilizers and matches." },
+  { keys: ["sulfur","s","element s","sulphur"], answer: "🟡 **Sulfur (S)** — Atomic № 16. Yellow solid. Forms SO₂ (acid rain), H₂SO₄ (sulfuric acid). Essential in amino acids (cysteine, methionine). Used in vulcanizing rubber." },
+  { keys: ["helium","he","element he"], answer: "🎈 **Helium (He)** — Atomic № 2. Noble gas, second lightest element. Does not react with anything. BP -269°C (lowest of any element). Used in balloons, MRI machines, and as cryogenic coolant." },
+  { keys: ["neon","ne","element ne"], answer: "💡 **Neon (Ne)** — Atomic № 10. Noble gas, inert. Glows bright orange-red when electrified — used in neon signs. Extracted from air by fractional distillation. Rare: 18 ppm in atmosphere." },
+  { keys: ["argon","ar","element ar"], answer: "💨 **Argon (Ar)** — Atomic № 18. Most abundant noble gas, ~1% of atmosphere. Used in welding (inert shield gas), incandescent bulbs, and semiconductor manufacturing." },
+  { keys: ["zinc","zn","element zn"], answer: "🔩 **Zinc (Zn)** — Atomic № 30. Used to galvanize steel (prevent rusting). Essential trace element — immune function, wound healing. Part of brass (Cu+Zn). Reacts with HCl to release H₂." },
+  { keys: ["aluminium","aluminum","al","element al"], answer: "✈️ **Aluminium (Al)** — Atomic № 13. Most abundant metal in Earth's crust. Lightweight, corrosion-resistant. Used in aircraft, packaging, and construction. Good conductor of heat and electricity." },
+  { keys: ["fluorine","f","element f"], answer: "⚠️ **Fluorine (F)** — Atomic № 9. Most reactive and electronegative element. Pale yellow gas. Forms HF (hydrofluoric acid). Used in toothpaste (fluoride), Teflon (PTFE), and refrigerants." },
+  { keys: ["bromine","br","element br"], answer: "🟤 **Bromine (Br)** — Atomic № 35. Only non-metal liquid at room temperature. Reddish-brown, toxic fumes. Used in flame retardants, pesticides, and photographic film." },
+  { keys: ["iodine","i","element i"], answer: "🟣 **Iodine (I)** — Atomic № 53. Dark purple-grey solid, sublimes to violet gas. Essential for thyroid hormone production. Used as antiseptic (iodine solution). Added to table salt (iodized salt)." },
+  { keys: ["mercury","hg","element hg","quicksilver"], answer: "🌡️ **Mercury (Hg)** — Atomic № 80. Only metal liquid at room temp. BP 357°C. Highly toxic (neurotoxin). Used in thermometers, barometers, and fluorescent lamps. Symbol Hg from 'Hydrargyrum'." },
+  { keys: ["uranium","u","element u"], answer: "☢️ **Uranium (U)** — Atomic № 92. Radioactive heavy metal. U-235 undergoes fission used in nuclear reactors and weapons. Half-life of U-238: 4.47 billion years. Density: 19.1 g/cm³." },
+  { keys: ["platinum","pt","element pt"], answer: "💍 **Platinum (Pt)** — Atomic № 78. Dense, precious metal. Excellent catalyst (catalytic converters, fuel cells). Does not corrode. Used in jewelry, lab equipment, and chemotherapy drugs." },
+
+  // ── Chemistry concepts ──
+  { keys: ["ph","ph scale"], answer: "⚗️ **pH** measures acidity on a 0–14 scale. pH < 7 = acidic, pH 7 = neutral, pH > 7 = basic. Formula: pH = -log[H⁺]. Each unit = 10× change in [H⁺]. Stomach acid ≈ pH 1.5." },
+  { keys: ["ionic bond","ionic bonding"], answer: "⚡ **Ionic bonds** form between metals and non-metals via electron transfer. The cation (metal) and anion (non-metal) attract electrostatically. Example: Na + Cl → Na⁺Cl⁻ (NaCl)." },
+  { keys: ["covalent bond","covalent bonding"], answer: "🔗 **Covalent bonds** form when atoms share electron pairs. Single (C-C), double (C=C), triple (C≡C) bonds. Polar (H₂O) vs nonpolar (O₂). Strength increases with bond order." },
+  { keys: ["metallic bond","metallic bonding"], answer: "🔩 **Metallic bonds** form when metal atoms release valence electrons into a 'sea of electrons'. This gives metals their properties: conductivity, malleability, ductility, and metallic lustre." },
+  { keys: ["hydrogen bond","hydrogen bonding"], answer: "💧 **Hydrogen bonds** are intermolecular attractions between H (bonded to N, O, or F) and lone pairs on N, O, or F. Weaker than covalent bonds but crucial for water properties and DNA base pairing." },
+  { keys: ["periodic table","mendeleev"], answer: "📊 The **Periodic Table** (Mendeleev, 1869) organizes 118 elements by atomic number. Groups (columns) share chemical properties. Periods (rows) = electron shells. Metals left, non-metals right." },
+  { keys: ["atom","atomic structure"], answer: "⚛️ An **atom** consists of: nucleus (protons + neutrons) + surrounding electrons. Protons = atomic number. Neutrons + protons = mass number. Electrons fill orbitals (1s, 2s, 2p, 3s...)." },
+  { keys: ["electron","electrons"], answer: "⚡ **Electrons** are negatively charged subatomic particles (charge -1, mass ≈ 0). They fill atomic orbitals in order of energy (Aufbau principle). Valence electrons determine chemical behavior." },
+  { keys: ["proton","protons"], answer: "🔴 **Protons** are positively charged particles in the nucleus (charge +1, mass ≈ 1 amu). The number of protons = atomic number = element identity. Protons + neutrons = mass number." },
+  { keys: ["neutron","neutrons"], answer: "⚪ **Neutrons** are neutral particles in the nucleus (charge 0, mass ≈ 1 amu). Same element with different neutron counts = **isotopes**. Example: C-12 (6n) vs C-14 (8n, radioactive)." },
+  { keys: ["isotope","isotopes"], answer: "☢️ **Isotopes** are atoms of the same element with different numbers of neutrons. Example: Hydrogen isotopes: H-1 (protium), H-2 (deuterium), H-3 (tritium). Some are radioactive." },
+  { keys: ["acid","acids","acidic"], answer: "🧪 **Acids** donate H⁺ protons (Brønsted-Lowry). Strong acids (HCl, H₂SO₄, HNO₃) fully dissociate. Weak acids (CH₃COOH) partially dissociate. pH < 7. Taste sour, corrode metals." },
+  { keys: ["base","bases","basic","alkaline"], answer: "🔵 **Bases** accept H⁺ or donate OH⁻. Strong bases (NaOH, KOH) fully dissociate. pH > 7. Feel slippery, taste bitter. React with acids in neutralization: acid + base → salt + water." },
+  { keys: ["organic chemistry","organic"], answer: "🌿 **Organic chemistry** studies carbon-containing compounds. Carbon forms 4 bonds, creating chains, rings, and branched structures. Key groups: alkanes, alkenes, alcohols, acids, esters, amines." },
+  { keys: ["inorganic chemistry","inorganic"], answer: "⚗️ **Inorganic chemistry** covers all compounds NOT based on C-H bonds. Includes metals, salts, oxides, acids, bases. Examples: NaCl, H₂SO₄, Fe₂O₃, KMnO₄." },
+  { keys: ["molar mass","molecular weight","molar"], answer: "⚖️ **Molar mass** = mass of 1 mole (6.022×10²³ particles) in g/mol. Sum of all atomic masses. H₂O = 2(1.008) + 16.00 = 18.02 g/mol. Used in stoichiometry calculations." },
+  { keys: ["chemical reaction","reaction"], answer: "⚗️ A **chemical reaction** breaks old bonds and forms new ones. Types: synthesis (A+B→AB), decomposition (AB→A+B), combustion (fuel+O₂→CO₂+H₂O), neutralization, redox." },
+  { keys: ["oxidation","reduction","redox","ox"], answer: "🔋 **Redox reactions**: OIL RIG — Oxidation Is Loss (of electrons), Reduction Is Gain (of electrons). Example: Zn + CuSO₄ → ZnSO₄ + Cu. Zn is oxidized (loses e⁻), Cu²⁺ is reduced (gains e⁻)." },
+  { keys: ["catalyst","catalysis"], answer: "🚀 A **catalyst** speeds up a reaction without being consumed. It lowers activation energy. Examples: enzymes (biological), platinum (industrial), MnO₂ (decomposes H₂O₂). Reaction rate increases significantly." },
+  { keys: ["polymer","polymers","polymerization"], answer: "🔗 **Polymers** are long chain molecules made of repeating monomers. Natural: DNA, proteins, cellulose, rubber. Synthetic: polyethylene (plastic bags), nylon, PVC, Teflon. Backbone usually C-C." },
+  { keys: ["dna","nucleic acid","rna"], answer: "🧬 **DNA** (deoxyribonucleic acid) carries genetic information. Double helix of nucleotides (A-T, G-C base pairs). RNA (ribonucleic acid) is single-stranded, involved in protein synthesis." },
+  { keys: ["protein","proteins","amino acid"], answer: "🥩 **Proteins** are polymers of amino acids linked by peptide bonds. 20 standard amino acids. Primary structure = sequence. Folded into 3D shapes. Functions: enzymes, hormones, structural support." },
+  { keys: ["enzyme","enzymes"], answer: "🔬 **Enzymes** are biological catalysts (mostly proteins). They lower activation energy and are highly specific (lock-and-key model). Temperature and pH affect activity. Example: amylase digests starch." },
+  { keys: ["electrochemistry","electrolysis","electrolyte"], answer: "⚡ **Electrochemistry** studies electrical energy from chemical reactions. Electrolysis uses electricity to drive non-spontaneous reactions (e.g. splitting H₂O → H₂ + O₂). Used in metal plating and batteries." },
+  { keys: ["titration","titrate"], answer: "🧫 **Titration** is a quantitative technique to find unknown concentration. A known solution (titrant) is slowly added to unknown until equivalence point (indicator changes color). Used in acid-base analysis." },
+  { keys: ["spectroscopy","spectrum"], answer: "🌈 **Spectroscopy** analyzes how matter interacts with electromagnetic radiation. Types: IR (bond vibrations), NMR (structure), UV-Vis (electronic transitions), Mass Spec (molecular weight)." },
+  { keys: ["thermodynamics","enthalpy","entropy"], answer: "🌡️ **Thermodynamics**: ΔH = enthalpy change (heat). Exothermic: ΔH < 0 (releases heat). Endothermic: ΔH > 0 (absorbs heat). ΔS = entropy (disorder). ΔG = ΔH - TΔS determines spontaneity." },
+  { keys: ["combustion","burning"], answer: "🔥 **Combustion** is a rapid exothermic reaction with oxygen. Complete combustion: fuel + O₂ → CO₂ + H₂O. Incomplete: produces CO and soot (carbon). Hydrocarbons burn to release energy." },
+  { keys: ["molarity","concentration","mole"], answer: "🧪 **Molarity (M)** = moles of solute / liters of solution. 1 M HCl = 1 mol HCl per liter. A **mole** = 6.022×10²³ particles (Avogadro's number). Links mass to chemical equations." },
+  { keys: ["gas law","boyle","charles","ideal gas"], answer: "💨 **Gas Laws**: Boyle's Law: P₁V₁ = P₂V₂ (constant T). Charles's Law: V₁/T₁ = V₂/T₂ (constant P). Ideal Gas: PV = nRT (R = 8.314 J/mol·K). Real gases deviate at high P or low T." },
 ];
 
 const getLocalAnswer = (question) => {
-  const q = question.toLowerCase();
+  // Strip common question words to get the core keyword
+  const q = question.toLowerCase()
+    .replace(/^(what is|what are|tell me about|explain|describe|define|how does|what does|give me info on|info on|about)\s+/i, "")
+    .trim();
+  const qFull = question.toLowerCase(); // also check full question
+
   for (const entry of LOCAL_ANSWERS) {
-    if (entry.keys.some(k => q.includes(k))) return entry.answer;
+    if (entry.keys.some(k => q === k || q.includes(k) || qFull.includes(k))) {
+      return entry.answer;
+    }
   }
   return null;
 };
@@ -205,12 +279,17 @@ ${compoundData ? `Context: User searched "${compoundData.searchName}" (${compoun
       throw new Error("API unavailable");
 
     } catch (err) {
-      // 3. Graceful offline fallback
+      // 3. Try local knowledge base one more time with cleaned query
       setIsOnline(false);
-      const fallback = getOfflineResponse();
-      addAIMessage(
-        `🌐 **Chemix AI — Offline Mode**\n\n${fallback}\n\n*Tip: Try asking about H₂O, pH, ionic bonds, or any compound name!*`
-      );
+      const localRetry = getLocalAnswer(q);
+      if (localRetry) {
+        addAIMessage(localRetry);
+      } else {
+        const fallback = getOfflineResponse();
+        addAIMessage(
+          `🌐 **Chemix AI — Offline Mode**\n\n${fallback}\n\n*Tip: Try asking about H₂O, pH, ionic bonds, or any compound name!*`
+        );
+      }
     }
 
     setThinking(false);
