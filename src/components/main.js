@@ -138,6 +138,7 @@ const LOCAL_ANSWERS = [
   { keys: ["gas law","boyle","charles","ideal gas"], answer: "💨 **Gas Laws**: Boyle's Law: P₁V₁ = P₂V₂ (constant T). Charles's Law: V₁/T₁ = V₂/T₂ (constant P). Ideal Gas: PV = nRT (R = 8.314 J/mol·K). Real gases deviate at high P or low T." },
 ];
 
+
 const getLocalAnswer = (question) => {
   // Strip common question words to get the core keyword
   const q = question.toLowerCase()
