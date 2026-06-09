@@ -1,56 +1,51 @@
 // ═══════════════════════════════════════════════════════
-// chemixAI.js  —  Chemix AI Brain (FIXED VERSION)
+// chemixAI.js — Chemix AI Brain (FIXED + CLEAN VERSION)
 // ═══════════════════════════════════════════════════════
 
-// ── Regex ───────────────────────────────────────────────
 import { detectFormula } from "./chemixParser";
-import { searchInternet } from "./chemixParser";
+import { searchInternet } from "./internetSearch";
 
-const GREETING_REGEX = /^(hi+|hello+|hey+|heyy+|hii+|helo+|heya|howdy|sup|yo+|ayo|wassup|wsp|hola|namaste|salam|hiii+|hewwo|hewwoo)\b/i;
+// ─────────────────────────────────────────────
+// REGEX
+// ─────────────────────────────────────────────
+const GREETING_REGEX = /^(hi+|hello+|hey+|heyy+|hii+|helo+|heya|yo+|ayo|sup)\b/i;
+const HOW_ARE_YOU_REGEX = /how (r|are) (u|you)|kemon acho|kaisa ho/i;
+const NAME_REGEX = /who (are|r) you|your name|introduce yourself/i;
+const THANKS_REGEX = /^(thanks|thank you|thx|ty|tysm)\b/i;
+const BYE_REGEX = /^(bye|goodbye|cya|see ya|ttyl)\b/i;
+const OK_REGEX = /^(ok|okay|k|kk|cool|nice|great|wow|fr|bet)$/i;
+const HELP_REGEX = /help|how to use/i;
+const FEATURE_REGEX = /features|what can you do/i;
 
-const HOW_ARE_YOU_REGEX = /how (r|are) (u|you)|hows it|how's it|u ok|you ok|kemon acho|kemon|kaisa ho/i;
-
-const NAME_REGEX = /\b(ur|your|whats|what's|what is|wats|whts|wts)\s+(ur|your)?\s*(name|nam|naem|nme)\b|\bwho\s+r\s+u\b|\bwho\s+are\s+you\b|\bintroduce\s+(ur|your)self\b|\btell\s+me\s+about\s+(ur|your)self\b/i;
-
-const THANKS_REGEX = /^(thanks|thank you|thx|ty|tysm|thank u|thnx|thanku)\b/i;
-
-const BYE_REGEX = /^(bye|goodbye|bb|cya|see ya|see you|later|ttyl|gtg)\b/i;
-
-const CREATOR_REGEX = /who (made|built|created|coded|developed) (you|u|this)/i;
-
-const HELP_REGEX = /^(help|help me|how to use|tutorial)\b/i;
-
-const FEATURE_REGEX = /what (can you|u can|do you|features)/i;
-
-const OK_REGEX = /^(ok|okay|k|kk|cool|nice|great|awesome|wow|fr|bet)$/i;
-
-// ── Chemistry keywords ────────────────────────────────
+// ─────────────────────────────────────────────
+// CHEMISTRY CHECK
+// ─────────────────────────────────────────────
 const CHEMISTRY_KEYWORDS = [
   "h2o","co2","nacl","nh3","ch4","hcl","h2so4","naoh","h2o2",
-  "hydrogen","oxygen","nitrogen","carbon","iron","gold","silver",
-  "atom","molecule","compound","bond","periodic table","ph",
-  "reaction","chemistry","acid","base"
+  "hydrogen","oxygen","nitrogen","carbon","iron","gold",
+  "atom","molecule","compound","bond","reaction","chemistry","acid","base","formula"
 ];
 
-// ── Chemistry detector ────────────────────────────────
 export const isChemistryQuestion = (text = "") => {
   const low = text.toLowerCase();
   return CHEMISTRY_KEYWORDS.some(k => low.includes(k));
 };
 
-// ── KB ────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// KB
+// ─────────────────────────────────────────────
 const KB = [
-  { k:["h2o","water"], a:"💧 Water (H₂O) — Universal solvent, bent shape, essential for life." },
-  { k:["co2","carbon dioxide"], a:"🌿 CO₂ — Greenhouse gas, used in photosynthesis." },
-  { k:["n2","nitrogen"], a:"🔵 Nitrogen (N₂) — 78% of air, very stable triple bond." },
-  { k:["o2","oxygen"], a:"🔴 Oxygen (O₂) — Needed for respiration." },
-  { k:["nacl","salt"], a:"🧂 NaCl — Ionic compound of sodium + chloride." },
+  { k:["h2o","water"], a:"💧 Water (H₂O) — Universal solvent, essential for life." },
+  { k:["co2","carbon dioxide"], a:"🌿 CO₂ — Greenhouse gas used in photosynthesis." },
+  { k:["nacl","salt"], a:"🧂 NaCl — Sodium + Chloride ionic compound." },
+  { k:["iron","fe2o3","ferric oxide"], a:"🧲 Fe₂O₃ — Ferric oxide (rust compound)." },
 ];
 
-// ── KB match ─────────────────────────────────────────
+// ─────────────────────────────────────────────
+// KB MATCH
+// ─────────────────────────────────────────────
 export const getKBAnswer = (q = "") => {
   const text = q.toLowerCase();
-
   for (const item of KB) {
     if (item.k.some(k => text.includes(k))) {
       return item.a;
@@ -59,72 +54,61 @@ export const getKBAnswer = (q = "") => {
   return null;
 };
 
-// ── Greeting ─────────────────────────────────────────
+// ─────────────────────────────────────────────
+// GREETING
+// ─────────────────────────────────────────────
 export const getGreetingAnswer = (q = "") => {
-  const text = q.toLowerCase();
+  const t = q.toLowerCase();
 
-  if (GREETING_REGEX.test(text))
+  if (GREETING_REGEX.test(t))
     return "👋 Hey! I'm Chemix AI ⚗️ Ask me chemistry questions!";
 
-  if (HOW_ARE_YOU_REGEX.test(text))
+  if (HOW_ARE_YOU_REGEX.test(t))
     return "😊 I'm good! Ready for chemistry!";
 
-  if (NAME_REGEX.test(text))
+  if (NAME_REGEX.test(t))
     return "🧠 I'm Chemix AI — Chemistry assistant ⚗️";
 
-  if (CREATOR_REGEX.test(text))
-    return "👨‍💻 Made by TimedCoder555";
-
-  if (THANKS_REGEX.test(text))
+  if (THANKS_REGEX.test(t))
     return "😊 You're welcome!";
 
-  if (BYE_REGEX.test(text))
+  if (BYE_REGEX.test(t))
     return "👋 Bye!";
 
-  if (OK_REGEX.test(text))
+  if (OK_REGEX.test(t))
     return "😄 Cool!";
 
-  if (HELP_REGEX.test(text))
+  if (HELP_REGEX.test(t))
     return "🆘 Ask me chemistry questions!";
 
-  if (FEATURE_REGEX.test(text))
-    return "⚗️ Chemistry AI features: elements, compounds, reactions";
+  if (FEATURE_REGEX.test(t))
+    return "⚗️ I can explain compounds, elements & reactions!";
 
   return null;
 };
 
-// ── Greeting checker ────────────────────────────────
+// ─────────────────────────────────────────────
+// GREETING CHECK
+// ─────────────────────────────────────────────
 export const isGreeting = (q = "") => {
-  const text = q.toLowerCase();
+  const t = q.toLowerCase();
   return (
-    GREETING_REGEX.test(text) ||
-    HOW_ARE_YOU_REGEX.test(text) ||
-    NAME_REGEX.test(text) ||
-    CREATOR_REGEX.test(text) ||
-    THANKS_REGEX.test(text) ||
-    BYE_REGEX.test(text) ||
-    OK_REGEX.test(text) ||
-    HELP_REGEX.test(text) ||
-    FEATURE_REGEX.test(text)
+    GREETING_REGEX.test(t) ||
+    HOW_ARE_YOU_REGEX.test(t) ||
+    NAME_REGEX.test(t) ||
+    THANKS_REGEX.test(t) ||
+    BYE_REGEX.test(t) ||
+    OK_REGEX.test(t) ||
+    HELP_REGEX.test(t) ||
+    FEATURE_REGEX.test(t)
   );
 };
 
-// ── Claude API ───────────────────────────────────────
+// ─────────────────────────────────────────────
+// AI (SAFE VERSION)
+// ─────────────────────────────────────────────
 export const askClaudeWithSearch = async (question, compoundContext) => {
-
-export const searchInternet = async (query) => {
-  const res = await fetch(
-    `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json`
-  );
-
-  const data = await res.json();
-
-  return data?.AbstractText || data?.Definition || null;
-};
-
-  if (!isChemistryQuestion(question)) {
-    throw new Error("Not chemistry");
-  }
+  if (!isChemistryQuestion(question)) return null;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12000);
@@ -134,12 +118,12 @@ export const searchInternet = async (query) => {
       method: "POST",
       signal: controller.signal,
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 800,
-        system: `You are Chemix AI (chemistry assistant). Keep answers short.`,
+        system: "You are Chemix AI. Keep answers short and chemistry focused.",
         messages: [{ role: "user", content: question }],
       }),
     });
@@ -148,64 +132,82 @@ export const searchInternet = async (query) => {
 
     const data = await res.json();
 
-    const text = (data?.content || [])
+    return (data?.content || [])
       .filter(b => b.type === "text")
       .map(b => b.text)
       .join("\n");
 
-    return text || null;
-
   } catch (e) {
     clearTimeout(timeout);
-    throw e;
+    return null;
   }
 };
 
-// ── MAIN FUNCTION ────────────────────────────────────
+// ─────────────────────────────────────────────
+// MAIN FUNCTION
+// ─────────────────────────────────────────────
 export const getChemixAIReply = async (question, compoundContext) => {
   const q = (question || "").trim();
 
-  // 1. Greeting (instant)
-  if (isGreeting(q)) {
-    return { text: getGreetingAnswer(q), source: "greeting" };
+  // 1. FAST GREETING ⚡
+  const greet = getGreetingAnswer(q);
+  if (greet) {
+    return { text: greet, source: "greeting" };
   }
 
-  // 2. Formula detection (NEW ⚡)
+  // 2. FORMULA DETECTION ⚗️
   const formula = detectFormula(q);
   if (formula) {
     return {
-      text: `🧪 Detected Formula: ${formula}\n\n⚗️ This is a chemical compound. Let me analyze it or search details...`,
-      source: "formula"
+      text: `🧪 Formula detected: ${formula}`,
+      source: "formula",
     };
   }
 
-  // 3. Local KB (fast)
+  // 3. KB FAST ⚡
   const kb = getKBAnswer(q);
   if (kb) {
     return { text: kb, source: "kb" };
   }
 
-  // 4. INTERNET SEARCH (REAL WEB DATA)
+  // 4. INTERNET SEARCH 🌐
   try {
-    const webResult = await searchInternet(q);
-
-    if (webResult) {
+    const web = await searchInternet(q);
+    if (web) {
       return {
-        text: `🌐 Internet Result:\n\n${webResult}`,
-        source: "internet"
+        text: `🌐 Internet:\n\n${web}`,
+        source: "internet",
       };
     }
   } catch (e) {}
 
-  // 5. AI fallback (optional)
+  // 5. AI fallback 🤖
   try {
     const ai = await askClaudeWithSearch(q, compoundContext);
     if (ai) return { text: ai, source: "ai" };
   } catch (e) {}
 
-  // 6. final fallback
+  // 6. FINAL fallback
   return {
-    text: "🧪 I couldn't find exact info. Try simpler chemistry terms like H2O, NaCl, Fe2O3 ⚗️",
-    source: "offline"
+    text:
+      "🧪 Try simpler chemistry terms:\nH2O, NaCl, Fe2O3, CO2 ⚗️",
+    source: "offline",
   };
+};
+
+// ─────────────────────────────────────────────
+// INTERNET SEARCH MODULE (SAFE)
+// ─────────────────────────────────────────────
+export const searchInternet = async (query) => {
+  try {
+    const res = await fetch(
+      `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json`
+    );
+
+    const data = await res.json();
+
+    return data?.AbstractText || data?.Definition || data?.Answer || null;
+  } catch (e) {
+    return null;
+  }
 };
