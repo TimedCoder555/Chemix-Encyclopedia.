@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { getChemixAIReply } from "./chemixAI";
 import logo from "../img/logo.png";
 import heroBg from "../img/bg.jpg";
 
