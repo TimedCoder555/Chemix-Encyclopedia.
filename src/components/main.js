@@ -138,16 +138,26 @@ const LOCAL_ANSWERS = [
   { keys: ["gas law","boyle","charles","ideal gas"], answer: "💨 **Gas Laws**: Boyle's Law: P₁V₁ = P₂V₂ (constant T). Charles's Law: V₁/T₁ = V₂/T₂ (constant P). Ideal Gas: PV = nRT (R = 8.314 J/mol·K). Real gases deviate at high P or low T." },
 ];
 
-
 const getLocalAnswer = (question) => {
-  // Strip common question words to get the core keyword
-  const q = question.toLowerCase()
+  const qFull = question.toLowerCase().trim();
+
+  // 1. Greetings check first
+  if (isGreeting(qFull)) return getGreetingAnswer(question);
+
+  // 2. Strip question words
+  const q = qFull
     .replace(/^(what is|what are|tell me about|explain|describe|define|how does|what does|give me info on|info on|about)\s+/i, "")
     .trim();
-  const qFull = question.toLowerCase(); // also check full question
 
   for (const entry of LOCAL_ANSWERS) {
-    if (entry.keys.some(k => q === k || q.includes(k) || qFull.includes(k))) {
+    if (entry.keys.some(k => {
+      // Single-char or 2-char keys: EXACT word match only (prevents "i"→Iodine, "u"→Uranium false matches)
+      if (k.length <= 2) {
+        return q === k || new RegExp(`\\b${k}\\b`).test(q);
+      }
+      // Longer keys: substring match is fine
+      return q === k || q.includes(k) || qFull.includes(k);
+    })) {
       return entry.answer;
     }
   }
