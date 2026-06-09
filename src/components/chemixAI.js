@@ -119,7 +119,7 @@ export const isGreeting = (q = "") => {
 // AI (SAFE VERSION)
 // ─────────────────────────────────────────────
 export const askClaudeWithSearch = async (question, compoundContext) => {
-  if (!isChemistryQuestion(question)) return null;
+  
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12000);
