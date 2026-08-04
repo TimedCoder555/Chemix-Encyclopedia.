@@ -207,4 +207,21 @@ export const getChemixAIReply = async (question, compoundContext) => {
     return { text: kb, source: "kb" };
   }
 
-  // 4.
+  // 4. API CALL FALLBACK 🤖
+  const aiReply = await askClaudeWithSearch(q, compoundContext);
+  if (aiReply) {
+    return { text: aiReply, source: "ai" };
+  }
+
+  // 5. INTERNET SEARCH FALLBACK 🌐
+  const searchResult = await searchInternet(q);
+  if (searchResult) {
+    return { text: searchResult, source: "search" };
+  }
+
+  // DEFAULT RESPONSE
+  return {
+    text: "🔍 Sorry, I couldn't find an answer. Try asking about a specific element, formula, or compound!",
+    source: "default",
+  };
+};
