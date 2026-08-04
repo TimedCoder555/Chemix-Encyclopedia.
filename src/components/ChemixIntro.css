@@ -1,0 +1,175 @@
+.intro-body {
+  background: #ffffff;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+}
+
+#stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 360px;
+  height: 120px;
+  margin: 0 auto;
+  transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Scale up all text at the end of animation */
+#stage.scale-up {
+  transform: scale(1.22);
+}
+
+/* Logo */
+#logo {
+  position: absolute;
+  left: 0;
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  border-radius: 12px;
+  opacity: 0;
+  transform-origin: bottom center;
+  z-index: 10;
+}
+
+/* Shadow underneath logo */
+#shadow {
+  position: absolute;
+  left: 0;
+  width: 60px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(0,0,0,0.3) 0%, transparent 70%);
+  filter: blur(2px);
+  opacity: 0;
+  bottom: 50px;
+  transform-origin: center center;
+  z-index: 5;
+}
+
+/* Text Container */
+#textBlock {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.title {
+  font-size: clamp(0.95rem, 4vw, 1.25rem);
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+/* Solid text layer */
+#solidText {
+  color: #0f172a;
+  clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+}
+#solidText span { 
+  color: #0284c7; 
+}
+
+/* Hollow outline text layer */
+#hollowText {
+  position: absolute;
+  top: 0; 
+  left: 0;
+  color: #0f172a;
+  clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%);
+}
+#hollowText span {
+  color: #ffffff;
+  text-shadow:
+    -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000,
+    -1.5px  1.5px 0 #000, 1.5px  1.5px 0 #000;
+}
+
+/* Subtitle Tagline Container */
+#tagline {
+  position: absolute;
+  bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.by-text {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: 1px;
+  opacity: 0;
+}
+
+/* Rainbow Gradient Animated Text */
+.brand-text {
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(-15px);
+  
+  background: linear-gradient(
+    90deg, 
+    #ff0055, #ff5000, #ffcc00, #00e676, #00b0ff, #7c4dff, #ff0055
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Keyframe Classes */
+.fade-in {
+  animation: fadeIn 0.4s ease forwards;
+}
+
+.bounce-in-rainbow {
+  animation: 
+    bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards,
+    rainbowShift 3s linear infinite;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-15px) scale(0.8);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(2px) scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes rainbowShift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
