@@ -481,7 +481,12 @@ background:"linear-gradient(170deg,#030d07 0%,#04091a 55%,#07030f 100%)",
         </div>
 
         {/* Input */}
-        <div style={{ padding:"8px 12px 22px", flexShrink:0, borderTop:"1px solid rgba(0,229,255,0.06)" }}>
+       <div style={{
+  padding:"8px 12px max(12px, env(safe-area-inset-bottom))",
+  flexShrink:0,
+  borderTop:"1px solid rgba(0,229,255,0.08)",
+  background:"linear-gradient(180deg,rgba(3,13,7,0.75),rgba(4,9,26,0.98))",
+}}>
           <div style={{
             display:"flex", alignItems:"center", gap:8,
             background:"rgba(255,255,255,0.04)",
