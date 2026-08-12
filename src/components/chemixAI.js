@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// chemixAI.js — Chemix AI Chemistry Engine & Knowledge Router
+// chemixAI.js — Chemix AI Chemistry Engine & Research Pipeline
 // ═══════════════════════════════════════════════════════
 
 import { 
@@ -31,10 +31,6 @@ const ATOMIC_WEIGHTS = {
   At: 210, Rn: 222, Fr: 223, Ra: 226, Ac: 227, Th: 232.04, Pa: 231.04, U: 238.03
 };
 
-/**
- * Parses formula string with parentheses into element atom counts.
- * e.g., "Al2(SO4)3" -> { Al: 2, S: 3, O: 12 }
- */
 const parseFormulaCounts = (formulaStr = "") => {
   try {
     const clean = normalizeSubscripts(formulaStr.trim()).replace(/\s+/g, "");
@@ -76,9 +72,6 @@ const parseFormulaCounts = (formulaStr = "") => {
   }
 };
 
-/**
- * Calculates molar mass and element breakdown locally.
- */
 const calculateMolarMass = (formulaStr = "") => {
   const counts = parseFormulaCounts(formulaStr);
   if (!counts) return null;
@@ -102,7 +95,7 @@ const calculateMolarMass = (formulaStr = "") => {
 };
 
 // ─────────────────────────────────────────────
-// 2. DETERMINISTIC FORMATTERS
+// 2. DETERMINISTIC CALCULATIONS FORMATTERS
 // ─────────────────────────────────────────────
 
 const formatMolarMassResponse = (formulaStr, calcResult) => {
@@ -168,7 +161,115 @@ const formatPercentCompositionResponse = (formulaStr, calcResult) => {
 };
 
 // ─────────────────────────────────────────────
-// 3. REGEX & INTENT ROUTING ENGINE
+// 3. PUBCHEM INTEGRATION & RESEARCH PIPELINE
+// ─────────────────────────────────────────────
+
+/**
+ * Extract target chemical entity name or formula from query.
+ */
+const extractChemicalQueryTarget = (question = "") => {
+  const formula = detectFormula(question);
+  if (formula) return formula;
+
+  // Clean out common question prefixes
+  const cleaned = question
+    .replace(/^(what is|tell me about|explain|properties of|is|what are the uses of|what is the use of)\s+/i, "")
+    .replace(/\s+(used for|polar|ionic|acidic|basic|\?)$/i, "")
+    .trim();
+
+  return cleaned || question.trim();
+};
+
+/**
+ * Query PubChem REST API dynamically for ANY chemical compound.
+ */
+export const fetchPubChemData = async (queryStr) => {
+  if (!queryStr) return null;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    // Step A: Search CID by formula or name
+    const searchUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(queryStr)}/cids/JSON`;
+    let res = await fetch(searchUrl, { signal: controller.signal });
+
+    // Fallback search by formula if name search fails
+    if (!res.ok) {
+      const formulaUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/fastformula/${encodeURIComponent(queryStr)}/cids/JSON`;
+      res = await fetch(formulaUrl, { signal: controller.signal });
+    }
+
+    if (!res.ok) {
+      clearTimeout(timeout);
+      return null;
+    }
+
+    const searchData = await res.json();
+    const cid = searchData?.IdentifierList?.CID?.[0];
+    if (!cid) {
+      clearTimeout(timeout);
+      return null;
+    }
+
+    // Step B: Get Compound Properties
+    const propUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/property/Title,IUPACName,MolecularFormula,MolecularWeight/JSON`;
+    const propRes = await fetch(propUrl, { signal: controller.signal });
+    const propData = propRes.ok ? await propRes.json() : null;
+    const props = propData?.PropertyTable?.Properties?.[0] || {};
+
+    // Step C: Get Compound Description / Summary
+    const descUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/description/JSON`;
+    const descRes = await fetch(descUrl, { signal: controller.signal });
+    const descData = descRes.ok ? await descRes.json() : null;
+    
+    let description = "";
+    if (descData?.InformationList?.Information) {
+      const infoList = descData.InformationList.Information;
+      const descItem = infoList.find(i => i.Description) || infoList[0];
+      description = descItem?.Description || "";
+    }
+
+    clearTimeout(timeout);
+
+    return {
+      cid,
+      title: props.Title || queryStr,
+      formula: props.MolecularFormula || "",
+      molecularWeight: props.MolecularWeight || "",
+      iupacName: props.IUPACName || "",
+      description: description || "Chemical compound information fetched from PubChem."
+    };
+
+  } catch (e) {
+    clearTimeout(timeout);
+    return null;
+  }
+};
+
+/**
+ * Format PubChem research data into markdown output when AI endpoint is missing or fails.
+ */
+const formatPubChemResearchResponse = (data) => {
+  const title = data.title || "Compound Overview";
+  const formula = data.formula ? ` (${data.formula})` : "";
+  
+  let md = `🧪 **${title}**${formula}\n\n`;
+  if (data.description) {
+    md += `${data.description}\n\n`;
+  }
+
+  md += `**Key Information:**\n`;
+  if (data.formula) md += `• **Formula:** ${data.formula}\n`;
+  if (data.molecularWeight) md += `• **Molar Mass:** ${data.molecularWeight} g/mol\n`;
+  if (data.iupacName) md += `• **IUPAC Name:** ${data.iupacName}\n`;
+  if (data.cid) md += `• **PubChem CID:** ${data.cid}\n`;
+
+  md += `\n*Source: National Center for Biotechnology Information (PubChem)*`;
+  return md;
+};
+
+// ─────────────────────────────────────────────
+// 4. REGEX & INTENT ROUTING ENGINE
 // ─────────────────────────────────────────────
 
 const GREETING_REGEX = /^(hi+|hello+|hey+|heyy+|hii+|yo+|ayo|sup)\b/i;
@@ -186,7 +287,7 @@ const PERCENT_COMP_PATTERNS = /percent|percentage|composition|percent compositio
 const MASS_TO_MOLES_REGEX = /(\d+(\.\d+)?)\s*(g|grams?)\s*(of)?\s*([A-Za-z0-9()]+)/i;
 const MOLES_TO_MASS_REGEX = /(\d+(\.\d+)?)\s*(moles?|mol)\s*(of)?\s*([A-Za-z0-9()]+)/i;
 
-const KNOWLEDGE_QUERY_PATTERNS = /what is|explain|tell me about|used for|why is|properties of|is .+ polar|is .+ ionic|eta ki|eta keno|use ki|kaj ki|definition|importance/i;
+const KNOWLEDGE_QUERY_PATTERNS = /what is|tell me about|explain|properties of|used for|why is|is .+ polar|is .+ ionic|eta ki|eta keno|use ki|kaj ki|definition|importance/i;
 
 const CHEMISTRY_KEYWORDS = [
   "h2o","co2","nacl","nh3","ch4","hcl","h2so4","naoh","h2o2","caco3",
@@ -197,9 +298,6 @@ const CHEMISTRY_KEYWORDS = [
   "mole","stoichiometry","periodic table","element","isotope","electronegativity"
 ];
 
-/**
- * Classifies user intent cleanly to distinguish formula-only inputs from knowledge queries.
- */
 export const detectIntent = (question = "") => {
   const q = question.trim();
   if (!q) return "empty";
@@ -224,7 +322,7 @@ export const detectIntent = (question = "") => {
 };
 
 // ─────────────────────────────────────────────
-// 4. PUBLIC UTILITY EXPORTS (Preserved Compatibility)
+// 5. PUBLIC UTILITY EXPORTS
 // ─────────────────────────────────────────────
 
 export const isChemistryQuestion = (text = "") => {
@@ -277,7 +375,7 @@ export const getGreetingAnswer = (q = "") => {
 
   if (HELP_REGEX.test(t))
     return "🆘 **How to use Chemix AI:**\n" +
-           "• Compound Knowledge: `What is CO2?` or `What is Al2(SO4)3 used for?`\n" +
+           "• Compound Research: `What is CO2?`, `What is aspirin?`, or `Tell me about caffeine`\n" +
            "• Molar Mass: `molar mass of CaCO3` or `Al2(SO4)3 molar mass`\n" +
            "• Stoichiometry: `18g H2O` or `2 mol NaCl`\n" +
            "• Composition: `percentage composition of H2O`\n" +
@@ -287,14 +385,13 @@ export const getGreetingAnswer = (q = "") => {
   if (FEATURE_REGEX.test(t))
     return "⚗️ **Features:**\n" +
            "• Local Deterministic Molar Mass & Stoichiometry Engine\n" +
-           "• Research Pipeline for Any Chemical Compound\n" +
+           "• Real-Time PubChem Knowledge & Research Pipeline\n" +
            "• Active View Context Resolution\n" +
            "• English & Banglish Chemistry Reasoning";
 
   return null;
 };
 
-// Small local KB only for common concepts / greetings
 const KB = [
   { k: ["ph", "what is ph"], a: "📊 **pH Scale**\n• Definition: Logarithmic measure of hydrogen ion concentration ($pH = -\\log[H^+]$).\n• Range: Acidic (pH < 7), Neutral (pH = 7), Basic/Alkaline (pH > 7)." },
   { k: ["ionic bond", "ionic bonding"], a: "⚡ **Ionic Bond**\nElectrostatic force of attraction between oppositely charged ions (cation + anion) formed via electron transfer." },
@@ -312,10 +409,6 @@ export const getKBAnswer = (q = "") => {
   }
   return null;
 };
-
-// ─────────────────────────────────────────────
-// 5. EXTERNAL SEARCH & AI RESEARCH PIPELINE
-// ─────────────────────────────────────────────
 
 export const searchInternet = async (query) => {
   if (!query || !query.trim()) return null;
@@ -354,6 +447,7 @@ const formatCompoundContext = (context) => {
   if (context.molecularWeight || context.weight) parts.push(`Molar Mass: ${context.molecularWeight || context.weight} g/mol`);
   if (context.iupacName) parts.push(`IUPAC: ${context.iupacName}`);
   if (context.cid) parts.push(`PubChem CID: ${context.cid}`);
+  if (context.description) parts.push(`Summary: ${context.description}`);
 
   return parts.length > 0 ? parts.join(" | ") : JSON.stringify(context);
 };
@@ -410,7 +504,6 @@ export const getChemixAIReply = async (question = "", compoundContext = null) =>
     };
   }
 
-  // Determine user intent
   const intent = detectIntent(q);
 
   // 2. Greetings
@@ -419,10 +512,9 @@ export const getChemixAIReply = async (question = "", compoundContext = null) =>
     return { text: greet, source: "greeting" };
   }
 
-  // Formula detection with contextual normalization
   const validatedFormula = detectFormula(q);
 
-  // 3. Mass to Moles Calculation (Local Deterministic)
+  // 3. Mass to Moles Calculation
   if (intent === "mass_to_moles") {
     const massMatch = q.match(MASS_TO_MOLES_REGEX);
     if (massMatch) {
@@ -442,7 +534,7 @@ export const getChemixAIReply = async (question = "", compoundContext = null) =>
     }
   }
 
-  // 4. Moles to Mass Calculation (Local Deterministic)
+  // 4. Moles to Mass Calculation
   if (intent === "moles_to_mass") {
     const molesMatch = q.match(MOLES_TO_MASS_REGEX);
     if (molesMatch) {
@@ -462,7 +554,7 @@ export const getChemixAIReply = async (question = "", compoundContext = null) =>
     }
   }
 
-  // 5. Molar Mass Calculation (Local Deterministic)
+  // 5. Molar Mass Calculation
   if (intent === "molar_mass" && validatedFormula) {
     const calc = calculateMolarMass(validatedFormula);
     if (calc) {
@@ -473,7 +565,7 @@ export const getChemixAIReply = async (question = "", compoundContext = null) =>
     }
   }
 
-  // 6. Percentage Composition Calculation (Local Deterministic)
+  // 6. Percentage Composition Calculation
   if (intent === "percentage_composition" && validatedFormula) {
     const calc = calculateMolarMass(validatedFormula);
     if (calc) {
@@ -484,7 +576,7 @@ export const getChemixAIReply = async (question = "", compoundContext = null) =>
     }
   }
 
-  // 7. Formula-Only Query (e.g. "CO2", "Al2(SO4)3") -> Local calculation & summary
+  // 7. Formula-Only Query (e.g. "CO2", "Al2(SO4)3")
   if (intent === "formula_only" && validatedFormula) {
     const calc = calculateMolarMass(validatedFormula);
     if (calc) {
@@ -515,21 +607,39 @@ export const getChemixAIReply = async (question = "", compoundContext = null) =>
     return { text: kbAnswer, source: "kb" };
   }
 
-  // 10. Knowledge Query / AI Research Pipeline (For "What is CO2?", "What is Al2(SO4)3 used for?", etc.)
-  const aiResearchReply = await askClaudeWithSearch(q, compoundContext);
-  if (aiResearchReply) {
-    return { text: aiResearchReply, source: "research" };
+  // 10. Research Pipeline: Query PubChem for Chemical Information
+  const targetEntity = extractChemicalQueryTarget(q);
+  const pubChemData = await fetchPubChemData(targetEntity);
+
+  if (pubChemData) {
+    // If AI Endpoint exists, ask it to summarize the PubChem data
+    const aiResearchReply = await askClaudeWithSearch(q, pubChemData);
+    if (aiResearchReply) {
+      return { text: aiResearchReply, source: "research" };
+    }
+
+    // Otherwise, format PubChem data deterministically
+    return {
+      text: formatPubChemResearchResponse(pubChemData),
+      source: "research"
+    };
   }
 
-  // 11. Internet Search Fallback
+  // 11. AI Backend Proxy Fallback (General Chemistry Questions)
+  const aiReply = await askClaudeWithSearch(q, compoundContext);
+  if (aiReply) {
+    return { text: aiReply, source: "ai" };
+  }
+
+  // 12. Internet Search Fallback
   const searchResult = await searchInternet(q);
   if (searchResult) {
     return { text: `🌐 **Search Information:**\n${searchResult}`, source: "search" };
   }
 
-  // 12. Safe Fallback Response
+  // 13. Safe Default Fallback
   return {
-    text: "I couldn't retrieve reliable information right now. I can still calculate molar mass, percentage composition, and perform formula-based calculations locally.",
+    text: "🔍 I couldn't retrieve information for this query. You can ask about molar mass, mass-to-mole conversions, or search for chemical compounds like `CO2`, `Aspirin`, or `Caffeine`.",
     source: "default"
   };
 };
