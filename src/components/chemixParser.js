@@ -41,17 +41,18 @@ export const normalizeSubscripts = (str = "") => {
 };
 
 /**
- * Smart contextual normalization for typos like "Co2", "co2", "h2o", "caco3".
- * Fixes lowercase or incorrect-case common typos without breaking valid elements like "CoCl2".
+ * Contextual normalization for chemical names and formulas.
+ * Prevents converting valid "Co" (Cobalt) into "CO" (Carbon Monoxide)
+ * while ensuring "co2" or "Co2" in common questions maps to "CO2".
  */
 export const normalizeFormulaTokenCase = (token = "") => {
   if (!token) return "";
   let clean = normalizeSubscripts(token.trim());
 
-  // If already valid as-is, keep original case (e.g. CoCl2, CO2)
+  // If valid as-is (e.g. CoCl2, CO2), preserve exact case
   if (validateChemicalFormula(clean)) return clean;
 
-  // Case 1: "co2" / "caco3" / "h2o" / "nacl" / "fe2o3" -> capitalized element symbols
+  // Case 1: All-lowercase formulas like "co2", "h2o", "caco3"
   const autoCapitalized = clean.replace(/([a-z])([a-z]?)/gi, (m, p1, p2) => {
     const symbol = p1.toUpperCase() + (p2 ? p2.toLowerCase() : "");
     if (VALID_ELEMENTS.has(symbol)) return symbol;
@@ -62,7 +63,7 @@ export const normalizeFormulaTokenCase = (token = "") => {
     return autoCapitalized;
   }
 
-  // Case 2: "Co2" -> If followed by a digit and not another element, user almost certainly meant "CO2"
+  // Case 2: "Co2" -> User likely typed "CO2" (Carbon Dioxide) unless accompanied by other elements
   if (/^Co\d+/i.test(clean) && !validateChemicalFormula(clean)) {
     const fixedCo = clean.replace(/^Co/i, "CO");
     if (validateChemicalFormula(fixedCo)) return fixedCo;
@@ -104,27 +105,22 @@ export const validateChemicalFormula = (formulaStr = "") => {
 
 /**
  * Detects and extracts valid chemical formulas from a natural language string.
- * Preserves export contract.
  */
 export const detectFormula = (text = "") => {
   if (!text || typeof text !== "string") return null;
 
   const normalized = normalizeSubscripts(text);
-  
-  // Clean punctuation attached to candidate words
   const words = normalized.split(/\s+/).map(w => w.replace(/^[^\w()]+|[^\w()]+$/g, ""));
   const validFound = [];
 
   for (const word of words) {
     if (!word) continue;
     
-    // Check original case
     if (validateChemicalFormula(word)) {
       validFound.push(word);
       continue;
     }
 
-    // Try contextual case normalization
     const fixedToken = normalizeFormulaTokenCase(word);
     if (fixedToken !== word && validateChemicalFormula(fixedToken)) {
       validFound.push(fixedToken);
@@ -136,7 +132,6 @@ export const detectFormula = (text = "") => {
 
 /**
  * Checks if a question is chemistry-related based on formula or chemistry terms.
- * Preserves export contract.
  */
 export const isFormulaQuestion = (text = "") => {
   if (!text || typeof text !== "string") return false;
