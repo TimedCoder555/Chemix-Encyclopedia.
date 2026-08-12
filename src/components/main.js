@@ -348,8 +348,9 @@ ${compoundData ? `Context: User searched "${compoundData.searchName}" (${compoun
     }}>
       <div onClick={e => e.stopPropagation()} style={{
         width:"100%", maxWidth:500,
-        height:"90vh",
-        background:"linear-gradient(170deg,#030d07 0%,#04091a 55%,#07030f 100%)",
+height:"min(90dvh, 720px)",
+maxHeight:"100dvh",
+background:"linear-gradient(170deg,#030d07 0%,#04091a 55%,#07030f 100%)",
         borderRadius:"26px 26px 0 0",
         border:"1px solid rgba(0,229,255,0.18)",
         borderBottom:"none",
