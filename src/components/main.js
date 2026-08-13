@@ -218,27 +218,42 @@ const ChemixAIModal = ({ onClose, compoundData }) => {
     setTimeout(() => inputRef.current?.focus(), 400);
   }, []);
 
-  // Handle Android visualViewport resize so keyboard never covers input
+  // Robust Android WebView & Mobile Viewport / Virtual Keyboard Handler
   useEffect(() => {
-    const handleViewportResize = () => {
-      if (!window.visualViewport || !modalCardRef.current) return;
-      const vp = window.visualViewport;
-      modalCardRef.current.style.height = `${vp.height}px`;
-      window.scrollTo(0, 0);
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const updateViewport = () => {
+      if (!modalCardRef.current) return;
+
+      let currentHeight = window.innerHeight;
+      let currentTop = 0;
+
+      if (window.visualViewport) {
+        currentHeight = window.visualViewport.height;
+        currentTop = window.visualViewport.offsetTop;
+      }
+
+      modalCardRef.current.style.height = `${currentHeight}px`;
+      modalCardRef.current.style.transform = `translateY(${currentTop}px)`;
+
+      // Ensure view stays scrolled to the newest message
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 50);
     };
 
+    updateViewport();
+
     if (window.visualViewport) {
-      window.visualViewport.addEventListener("resize", handleViewportResize);
-      window.visualViewport.addEventListener("scroll", handleViewportResize);
-      handleViewportResize();
+      window.visualViewport.addEventListener("resize", updateViewport);
+      window.visualViewport.addEventListener("scroll", updateViewport);
     }
+    window.addEventListener("resize", updateViewport);
 
     return () => {
       if (window.visualViewport) {
-        window.visualViewport.removeEventListener("resize", handleViewportResize);
-        window.visualViewport.removeEventListener("scroll", handleViewportResize);
+        window.visualViewport.removeEventListener("resize", updateViewport);
+        window.visualViewport.removeEventListener("scroll", updateViewport);
       }
+      window.removeEventListener("resize", updateViewport);
     };
   }, []);
 
@@ -379,7 +394,7 @@ ${compoundData ? `Context: User searched "${compoundData.searchName}" (${compoun
         style={{
           width:"100%", maxWidth:500,
           height:"min(90dvh, 720px)",
-          maxHeight:"100dvh",
+          maxHeight:"100%",
           background:"linear-gradient(170deg,#030d07 0%,#04091a 55%,#07030f 100%)",
           borderRadius:"26px 26px 0 0",
           border:"1px solid rgba(0,229,255,0.18)",
@@ -388,6 +403,7 @@ ${compoundData ? `Context: User searched "${compoundData.searchName}" (${compoun
           overflow:"hidden",
           animation:"slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1)",
           boxShadow:"0 -12px 60px rgba(0,180,255,0.18), 0 -4px 20px rgba(124,77,255,0.12)",
+          willChange:"height, transform",
         }}
       >
 
