@@ -47,6 +47,10 @@ const safeJson = async (res) => {
   try { return await res.json(); } catch { return null; }
 };
 
+const isGreeting = (s) => /^(hi|hello|hey|greetings|hola|namaste)\b/i.test(s);
+const getGreetingAnswer = () =>
+  "👋 Hello! I am **Chemix AI**. Ask me anything about molecules, chemical reactions, elements, or concepts like pH, molar mass, and bonding!";
+
 // ─────────────────────────────────────────────
 // LOCAL AI — chemistry knowledge base fallback
 // (used when Anthropic API is unavailable in browser)
@@ -204,14 +208,21 @@ const ChemixAIModal = ({ onClose, compoundData }) => {
   });
   const [thinking, setThinking] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
+  const [vpHeight, setVpHeight] = useState(null);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef       = useRef(null);
   const isSending      = useRef(false);
   const modalCardRef   = useRef(null);
+  const modalOverlayRef = useRef(null);
+
+  const scrollMessagesToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, thinking]);
+    scrollMessagesToBottom();
+  }, [messages, thinking, scrollMessagesToBottom]);
 
   // Focus input after open
   useEffect(() => {
@@ -221,8 +232,6 @@ const ChemixAIModal = ({ onClose, compoundData }) => {
   // Robust Android WebView & Mobile Viewport / Virtual Keyboard Handler
   useEffect(() => {
     const updateViewport = () => {
-      if (!modalCardRef.current) return;
-
       let currentHeight = window.innerHeight;
       let currentTop = 0;
 
@@ -231,13 +240,41 @@ const ChemixAIModal = ({ onClose, compoundData }) => {
         currentTop = window.visualViewport.offsetTop;
       }
 
-      modalCardRef.current.style.height = `${currentHeight}px`;
-      modalCardRef.current.style.transform = `translateY(${currentTop}px)`;
+      const screenHeight = window.screen?.height || window.innerHeight;
+      const isKbd = currentHeight < screenHeight * 0.75 || currentTop > 0;
 
-      // Ensure view stays scrolled to the newest message
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 50);
+      setIsKeyboardOpen(isKbd);
+      setVpHeight(currentHeight);
+
+      if (modalCardRef.current) {
+        if (isKbd) {
+          modalCardRef.current.style.height = `${currentHeight}px`;
+          modalCardRef.current.style.maxHeight = `${currentHeight}px`;
+          modalCardRef.current.style.transform = `translateY(${currentTop}px)`;
+        } else {
+          modalCardRef.current.style.height = "min(90dvh, 720px)";
+          modalCardRef.current.style.maxHeight = "100dvh";
+          modalCardRef.current.style.transform = "translateY(0px)";
+        }
+      }
+
+      if (modalOverlayRef.current) {
+        if (isKbd) {
+          modalOverlayRef.current.style.height = `${currentHeight}px`;
+          modalOverlayRef.current.style.top = `${currentTop}px`;
+        } else {
+          modalOverlayRef.current.style.height = "100%";
+          modalOverlayRef.current.style.top = "0px";
+        }
+      }
+
+      if (isKbd) {
+        window.scrollTo(0, 0);
+        setTimeout(() => {
+          inputRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          scrollMessagesToBottom();
+        }, 60);
+      }
     };
 
     updateViewport();
@@ -255,7 +292,7 @@ const ChemixAIModal = ({ onClose, compoundData }) => {
       }
       window.removeEventListener("resize", updateViewport);
     };
-  }, []);
+  }, [scrollMessagesToBottom]);
 
   const addAIMessage = (text) => {
     setMessages(prev => [...prev, {
@@ -380,44 +417,51 @@ ${compoundData ? `Context: User searched "${compoundData.searchName}" (${compoun
   ];
 
   return (
-    <div onClick={onClose} style={{
-      position:"fixed", top:0, bottom:0, left:0, right:0, zIndex:2000,
-      background:"rgba(0,0,0,0.85)",
-      backdropFilter:"blur(14px)",
-      WebkitBackdropFilter:"blur(14px)",
-      display:"flex", alignItems:"flex-end", justifyContent:"center",
-      animation:"fadeIn 0.2s ease",
-    }}>
+    <div
+      ref={modalOverlayRef}
+      onClick={onClose}
+      style={{
+        position:"fixed", top:0, bottom:0, left:0, right:0, zIndex:2000,
+        background:"rgba(0,0,0,0.85)",
+        backdropFilter:"blur(14px)",
+        WebkitBackdropFilter:"blur(14px)",
+        display:"flex", alignItems:"flex-end", justifyContent:"center",
+        animation:"fadeIn 0.2s ease",
+      }}
+    >
       <div
         ref={modalCardRef}
         onClick={e => e.stopPropagation()}
         style={{
           width:"100%", maxWidth:500,
-          height:"min(90dvh, 720px)",
-          maxHeight:"100%",
-          background:"linear-gradient(170deg,#030d07 0%,#04091a 55%,#07030f 100%)",
-          borderRadius:"26px 26px 0 0",
-          border:"1px solid rgba(0,229,255,0.18)",
+          height: vpHeight ? `${vpHeight}px` : "min(90dvh, 720px)",
+          maxHeight: isKeyboardOpen ? `${vpHeight}px` : "100dvh",
+          background:"linear-gradient(170deg, #020b14 0%, #061527 40%, #0a1f38 75%, #050e1a 100%)",
+          borderRadius: isKeyboardOpen ? "0" : "26px 26px 0 0",
+          border:"1px solid rgba(0,229,255,0.22)",
           borderBottom:"none",
           display:"flex", flexDirection:"column",
           overflow:"hidden",
-          animation:"slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1)",
-          boxShadow:"0 -12px 60px rgba(0,180,255,0.18), 0 -4px 20px rgba(124,77,255,0.12)",
+          animation: isKeyboardOpen ? "none" : "slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1)",
+          boxShadow:"0 -12px 60px rgba(0,229,255,0.25), 0 -4px 20px rgba(124,77,255,0.18)",
           willChange:"height, transform",
+          transition:"border-radius 0.2s ease, height 0.1s ease-out",
         }}
       >
 
         {/* Handle */}
-        <div style={{ display:"flex", justifyContent:"center", padding:"10px 0 2px", flexShrink:0 }}>
-          <div style={{ width:38, height:4, borderRadius:2, background:"rgba(255,255,255,0.15)" }} />
-        </div>
+        {!isKeyboardOpen && (
+          <div style={{ display:"flex", justifyContent:"center", padding:"10px 0 2px", flexShrink:0 }}>
+            <div style={{ width:38, height:4, borderRadius:2, background:"rgba(255,255,255,0.15)" }} />
+          </div>
+        )}
 
         {/* Header */}
         <div style={{
           display:"flex", alignItems:"center", justifyContent:"space-between",
           padding:"8px 16px 12px", flexShrink:0,
-          borderBottom:"1px solid rgba(0,229,255,0.08)",
-          background:"linear-gradient(90deg,rgba(0,229,255,0.05),rgba(124,77,255,0.05))",
+          borderBottom:"1px solid rgba(0,229,255,0.12)",
+          background:"linear-gradient(90deg,rgba(0,229,255,0.08),rgba(124,77,255,0.08))",
         }}>
           <div style={{ display:"flex", alignItems:"center", gap:11 }}>
             <div style={{
@@ -459,6 +503,7 @@ ${compoundData ? `Context: User searched "${compoundData.searchName}" (${compoun
           flex:1, overflowY:"auto", padding:"12px 14px",
           display:"flex", flexDirection:"column", gap:10,
           scrollBehavior:"smooth", WebkitOverflowScrolling:"touch",
+          minHeight:0,
         }}>
           {messages.map((msg, i) => (
             <div key={i} style={{
@@ -527,25 +572,27 @@ ${compoundData ? `Context: User searched "${compoundData.searchName}" (${compoun
           </div>
         </div>
 
-        {/* Input */}
+        {/* Input Container - Futuristic Cyan/Teal Glassmorphism */}
         <div style={{
           padding:"8px 12px max(12px, env(safe-area-inset-bottom))",
           flexShrink:0,
-          borderTop:"1px solid rgba(0,229,255,0.12)",
-          background:"linear-gradient(180deg,rgba(3,13,7,0.85),rgba(4,9,26,0.98))",
-          boxShadow:"0 -4px 20px rgba(0,0,0,0.5)",
+          borderTop:"1px solid rgba(0,229,255,0.20)",
+          background:"linear-gradient(180deg, rgba(3, 16, 26, 0.92) 0%, rgba(2, 9, 18, 0.98) 100%)",
+          boxShadow:"0 -6px 24px rgba(0, 0, 0, 0.65)",
+          position:"relative",
+          zIndex:10,
         }}>
           <div style={{
             display:"flex", alignItems:"center", gap:10,
-            background:"rgba(8,16,28,0.72)",
-            backdropFilter:"blur(12px)",
-            WebkitBackdropFilter:"blur(12px)",
-            border:"1.5px solid rgba(0,229,255,0.28)",
+            background:"rgba(5, 22, 36, 0.85)",
+            backdropFilter:"blur(16px)",
+            WebkitBackdropFilter:"blur(16px)",
+            border:"1.5px solid rgba(0,229,255,0.45)",
             borderRadius:28, padding:"6px 8px 6px 14px",
-            boxShadow:"0 4px 20px rgba(0,229,255,0.08), inset 0 1px 0 rgba(255,255,255,0.1)",
+            boxShadow:"0 0 20px rgba(0,229,255,0.22), inset 0 1px 1px rgba(255,255,255,0.15)",
             transition:"all 0.2s ease",
           }}>
-            <span style={{ fontSize:16, opacity:0.85, userSelect:"none" }}>⚗️</span>
+            <span style={{ fontSize:16, filter:"drop-shadow(0 0 5px rgba(0,229,255,0.8))", userSelect:"none" }}>⚗️</span>
             <input
               ref={inputRef}
               value={input}
@@ -553,7 +600,8 @@ ${compoundData ? `Context: User searched "${compoundData.searchName}" (${compoun
               onKeyDown={handleKeyDown}
               onFocus={() => {
                 setTimeout(() => {
-                  messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+                  inputRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                  scrollMessagesToBottom();
                 }, 150);
               }}
               placeholder="Ask about a molecule, reaction, element..."
