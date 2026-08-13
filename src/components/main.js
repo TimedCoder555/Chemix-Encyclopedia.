@@ -207,6 +207,7 @@ const ChemixAIModal = ({ onClose, compoundData }) => {
   const messagesEndRef = useRef(null);
   const inputRef       = useRef(null);
   const isSending      = useRef(false);
+  const modalCardRef   = useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -215,6 +216,30 @@ const ChemixAIModal = ({ onClose, compoundData }) => {
   // Focus input after open
   useEffect(() => {
     setTimeout(() => inputRef.current?.focus(), 400);
+  }, []);
+
+  // Handle Android visualViewport resize so keyboard never covers input
+  useEffect(() => {
+    const handleViewportResize = () => {
+      if (!window.visualViewport || !modalCardRef.current) return;
+      const vp = window.visualViewport;
+      modalCardRef.current.style.height = `${vp.height}px`;
+      window.scrollTo(0, 0);
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", handleViewportResize);
+      window.visualViewport.addEventListener("scroll", handleViewportResize);
+      handleViewportResize();
+    }
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("resize", handleViewportResize);
+        window.visualViewport.removeEventListener("scroll", handleViewportResize);
+      }
+    };
   }, []);
 
   const addAIMessage = (text) => {
@@ -235,15 +260,16 @@ const ChemixAIModal = ({ onClose, compoundData }) => {
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     }]);
     setThinking(true);
-const chemixReply = await getChemixAIReply(q, compoundData);
 
-if (chemixReply && chemixReply.text) {
-  await new Promise(r => setTimeout(r, 600));
-  addAIMessage(chemixReply.text);
-  setThinking(false);
-  isSending.current = false;
-  return;
-}
+    const chemixReply = await getChemixAIReply(q, compoundData);
+
+    if (chemixReply && chemixReply.text) {
+      await new Promise(r => setTimeout(r, 600));
+      addAIMessage(chemixReply.text);
+      setThinking(false);
+      isSending.current = false;
+      return;
+    }
 
     // 1. Try local knowledge base first (instant, no network needed)
     const localAnswer = getLocalAnswer(q);
@@ -340,25 +366,30 @@ ${compoundData ? `Context: User searched "${compoundData.searchName}" (${compoun
 
   return (
     <div onClick={onClose} style={{
-      position:"fixed", inset:0, zIndex:2000,
+      position:"fixed", top:0, bottom:0, left:0, right:0, zIndex:2000,
       background:"rgba(0,0,0,0.85)",
       backdropFilter:"blur(14px)",
+      WebkitBackdropFilter:"blur(14px)",
       display:"flex", alignItems:"flex-end", justifyContent:"center",
       animation:"fadeIn 0.2s ease",
     }}>
-      <div onClick={e => e.stopPropagation()} style={{
-        width:"100%", maxWidth:500,
-height:"min(90dvh, 720px)",
-maxHeight:"100dvh",
-background:"linear-gradient(170deg,#030d07 0%,#04091a 55%,#07030f 100%)",
-        borderRadius:"26px 26px 0 0",
-        border:"1px solid rgba(0,229,255,0.18)",
-        borderBottom:"none",
-        display:"flex", flexDirection:"column",
-        overflow:"hidden",
-        animation:"slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1)",
-        boxShadow:"0 -12px 60px rgba(0,180,255,0.18), 0 -4px 20px rgba(124,77,255,0.12)",
-      }}>
+      <div
+        ref={modalCardRef}
+        onClick={e => e.stopPropagation()}
+        style={{
+          width:"100%", maxWidth:500,
+          height:"min(90dvh, 720px)",
+          maxHeight:"100dvh",
+          background:"linear-gradient(170deg,#030d07 0%,#04091a 55%,#07030f 100%)",
+          borderRadius:"26px 26px 0 0",
+          border:"1px solid rgba(0,229,255,0.18)",
+          borderBottom:"none",
+          display:"flex", flexDirection:"column",
+          overflow:"hidden",
+          animation:"slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1)",
+          boxShadow:"0 -12px 60px rgba(0,180,255,0.18), 0 -4px 20px rgba(124,77,255,0.12)",
+        }}
+      >
 
         {/* Handle */}
         <div style={{ display:"flex", justifyContent:"center", padding:"10px 0 2px", flexShrink:0 }}>
@@ -411,7 +442,7 @@ background:"linear-gradient(170deg,#030d07 0%,#04091a 55%,#07030f 100%)",
         <div style={{
           flex:1, overflowY:"auto", padding:"12px 14px",
           display:"flex", flexDirection:"column", gap:10,
-          scrollBehavior:"smooth",
+          scrollBehavior:"smooth", WebkitOverflowScrolling:"touch",
         }}>
           {messages.map((msg, i) => (
             <div key={i} style={{
@@ -481,39 +512,49 @@ background:"linear-gradient(170deg,#030d07 0%,#04091a 55%,#07030f 100%)",
         </div>
 
         {/* Input */}
-       <div style={{
-  padding:"8px 12px max(12px, env(safe-area-inset-bottom))",
-  flexShrink:0,
-  borderTop:"1px solid rgba(0,229,255,0.08)",
-  background:"linear-gradient(180deg,rgba(3,13,7,0.75),rgba(4,9,26,0.98))",
-}}>
+        <div style={{
+          padding:"8px 12px max(12px, env(safe-area-inset-bottom))",
+          flexShrink:0,
+          borderTop:"1px solid rgba(0,229,255,0.12)",
+          background:"linear-gradient(180deg,rgba(3,13,7,0.85),rgba(4,9,26,0.98))",
+          boxShadow:"0 -4px 20px rgba(0,0,0,0.5)",
+        }}>
           <div style={{
-            display:"flex", alignItems:"center", gap:8,
-            background:"rgba(255,255,255,0.04)",
-            border:"1.5px solid rgba(0,229,255,0.2)",
-            borderRadius:50, padding:"8px 8px 8px 14px",
-            transition:"border-color 0.2s",
+            display:"flex", alignItems:"center", gap:10,
+            background:"rgba(8,16,28,0.72)",
+            backdropFilter:"blur(12px)",
+            WebkitBackdropFilter:"blur(12px)",
+            border:"1.5px solid rgba(0,229,255,0.28)",
+            borderRadius:28, padding:"6px 8px 6px 14px",
+            boxShadow:"0 4px 20px rgba(0,229,255,0.08), inset 0 1px 0 rgba(255,255,255,0.1)",
+            transition:"all 0.2s ease",
           }}>
+            <span style={{ fontSize:16, opacity:0.85, userSelect:"none" }}>⚗️</span>
             <input
               ref={inputRef}
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask Chemix AI anything..."
-              style={{ flex:1, background:"transparent", border:"none", outline:"none", color:"#fff", fontSize:13, fontFamily:"inherit" }}
+              onFocus={() => {
+                setTimeout(() => {
+                  messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+                }, 150);
+              }}
+              placeholder="Ask about a molecule, reaction, element..."
+              style={{ flex:1, background:"transparent", border:"none", outline:"none", color:"#fff", fontSize:13.5, fontFamily:"inherit" }}
             />
             <button
               onClick={sendMessage}
               disabled={!input.trim() || thinking}
               style={{
-                width:36, height:36, borderRadius:50, flexShrink:0, border:"none",
+                width:38, height:38, borderRadius:50, flexShrink:0, border:"none",
                 background: input.trim() && !thinking
                   ? "linear-gradient(135deg,#00e5ff,#7c4dff)"
                   : "rgba(255,255,255,0.07)",
                 cursor: input.trim() && !thinking ? "pointer" : "default",
                 display:"flex", alignItems:"center", justifyContent:"center",
-                transition:"all 0.2s",
-                boxShadow: input.trim() && !thinking ? "0 0 12px rgba(0,229,255,0.35)" : "none",
+                transition:"all 0.2s ease",
+                boxShadow: input.trim() && !thinking ? "0 0 16px rgba(0,229,255,0.45)" : "none",
               }}
             >
               {thinking
@@ -522,7 +563,7 @@ background:"linear-gradient(170deg,#030d07 0%,#04091a 55%,#07030f 100%)",
               }
             </button>
           </div>
-          <div style={{ textAlign:"center", marginTop:5, color:"rgba(255,255,255,0.18)", fontSize:9.5 }}>
+          <div style={{ textAlign:"center", marginTop:6, color:"rgba(255,255,255,0.28)", fontSize:9.5, letterSpacing:0.2 }}>
             Chemix AI · {isOnline ? "Powered by Claude" : "Offline Mode — Local Chemistry Knowledge"}
           </div>
         </div>
