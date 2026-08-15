@@ -208,9 +208,18 @@ const ChemixAIModal = ({ onClose, compoundData }) => {
   });
   const [thinking, setThinking] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
-  const [viewportHeight, setViewportHeight] = useState(null);
-  const [keyboardOpen, setKeyboardOpen]     = useState(false);
+  const [viewportState, setViewportState] = useState(() => {
+    const vp = typeof window !== "undefined" ? window.visualViewport : null;
+    return {
+      height: vp ? vp.height : (typeof window !== "undefined" ? window.innerHeight : 0),
+      offsetTop: vp ? vp.offsetTop : 0,
+      keyboardOpen: false,
+    };
+  });
   const [isInputFocused, setIsInputFocused] = useState(false);
+
+  const viewportHeight = viewportState.height;
+  const keyboardOpen = viewportState.keyboardOpen;
 
   const messagesEndRef = useRef(null);
   const inputRef       = useRef(null);
@@ -224,49 +233,47 @@ const ChemixAIModal = ({ onClose, compoundData }) => {
     scrollToBottom();
   }, [messages, thinking, scrollToBottom]);
 
-  // Visual Viewport API for mobile keyboard detection and overlay resizing
+  // Visual Viewport API for mobile keyboard detection and overlay resizing.
+  // AppMint/Web2APK can keep the layout viewport static while the visual
+  // viewport shrinks around the Android soft keyboard, so track both height
+  // and offsetTop.
   useEffect(() => {
     const handleViewportChange = () => {
+      if (typeof window === "undefined") return;
+
       const vp = window.visualViewport;
-      if (vp) {
-        const height = vp.height;
-        const screenH = window.innerHeight;
-        // Detect keyboard if visual viewport shrunk significantly relative to full window
-        const isKbd = height < screenH * 0.85;
-        
-        setViewportHeight(height);
-        setKeyboardOpen(isKbd);
-      } else {
-        setViewportHeight(window.innerHeight);
-        setKeyboardOpen(false);
-      }
+      const windowHeight = window.innerHeight;
+      const height = vp ? vp.height : windowHeight;
+      const offsetTop = vp ? vp.offsetTop : 0;
+
+      // A large visual-viewport reduction is a reliable keyboard signal.
+      const isKbd = (windowHeight - height) > 150;
+
+      setViewportState({
+        height,
+        offsetTop,
+        keyboardOpen: isKbd,
+      });
     };
 
     handleViewportChange();
 
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener("resize", handleViewportChange);
-      window.visualViewport.addEventListener("scroll", handleViewportChange);
-    } else {
-      window.addEventListener("resize", handleViewportChange);
+    const vp = typeof window !== "undefined" ? window.visualViewport : null;
+
+    if (vp) {
+      vp.addEventListener("resize", handleViewportChange);
+      vp.addEventListener("scroll", handleViewportChange);
     }
 
-    return () => {
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener("resize", handleViewportChange);
-        window.visualViewport.removeEventListener("scroll", handleViewportChange);
-      } else {
-        window.removeEventListener("resize", handleViewportChange);
-      }
-    };
-  }, []);
+    window.addEventListener("resize", handleViewportChange);
 
-  // Initial input focus (only once on mount)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      inputRef.current?.focus();
-    }, 400);
-    return () => clearTimeout(timer);
+    return () => {
+      if (vp) {
+        vp.removeEventListener("resize", handleViewportChange);
+        vp.removeEventListener("scroll", handleViewportChange);
+      }
+      window.removeEventListener("resize", handleViewportChange);
+    };
   }, []);
 
   const addAIMessage = (text) => {
@@ -396,10 +403,10 @@ ${compoundData ? `Context: User searched "${compoundData.searchName}" (${compoun
       onClick={onClose}
       style={{
         position: "fixed",
-        top: 0,
-        bottom: 0,
+        top: `${viewportState.offsetTop}px`,
         left: 0,
         right: 0,
+        width: "100%",
         zIndex: 2000,
         background: "rgba(0,0,0,0.85)",
         backdropFilter: "blur(14px)",
@@ -409,6 +416,8 @@ ${compoundData ? `Context: User searched "${compoundData.searchName}" (${compoun
         justifyContent: "center",
         animation: "fadeIn 0.2s ease",
         height: viewportHeight ? `${viewportHeight}px` : "100dvh",
+        maxHeight: viewportHeight ? `${viewportHeight}px` : "100dvh",
+        overflow: "hidden",
       }}
     >
       <div
@@ -417,7 +426,7 @@ ${compoundData ? `Context: User searched "${compoundData.searchName}" (${compoun
           width: "100%",
           maxWidth: 500,
           height: viewportHeight ? `${viewportHeight}px` : "min(90dvh, 720px)",
-          maxHeight: "100dvh",
+          maxHeight: viewportHeight ? `${viewportHeight}px` : "100dvh",
           background: "linear-gradient(170deg, #020b14 0%, #061527 40%, #0a1f38 75%, #050e1a 100%)",
           borderRadius: keyboardOpen ? "0px" : "26px 26px 0 0",
           border: "1px solid rgba(0,229,255,0.22)",
