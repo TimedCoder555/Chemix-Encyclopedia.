@@ -1,3 +1,21 @@
+/* Android WebView / AppMint viewport safety */
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+html {
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+}
+
 *{
   margin:0;
   padding:0;
