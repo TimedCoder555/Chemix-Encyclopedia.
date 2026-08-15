@@ -208,91 +208,66 @@ const ChemixAIModal = ({ onClose, compoundData }) => {
   });
   const [thinking, setThinking] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
-  const [vpHeight, setVpHeight] = useState(null);
-  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  const [viewportHeight, setViewportHeight] = useState(null);
+  const [keyboardOpen, setKeyboardOpen]     = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
+
   const messagesEndRef = useRef(null);
   const inputRef       = useRef(null);
   const isSending      = useRef(false);
-  const modalCardRef   = useRef(null);
-  const modalOverlayRef = useRef(null);
 
-  const scrollMessagesToBottom = useCallback(() => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
   useEffect(() => {
-    scrollMessagesToBottom();
-  }, [messages, thinking, scrollMessagesToBottom]);
+    scrollToBottom();
+  }, [messages, thinking, scrollToBottom]);
 
-  // Focus input after open
+  // Visual Viewport API for mobile keyboard detection and overlay resizing
   useEffect(() => {
-    setTimeout(() => inputRef.current?.focus(), 400);
-  }, []);
-
-  // Robust Android WebView & Mobile Viewport / Virtual Keyboard Handler
-  useEffect(() => {
-    const updateViewport = () => {
-      let currentHeight = window.innerHeight;
-      let currentTop = 0;
-
-      if (window.visualViewport) {
-        currentHeight = window.visualViewport.height;
-        currentTop = window.visualViewport.offsetTop;
-      }
-
-      const screenHeight = window.screen?.height || window.innerHeight;
-      const isKbd = currentHeight < screenHeight * 0.75 || currentTop > 0;
-
-      setIsKeyboardOpen(isKbd);
-      setVpHeight(currentHeight);
-
-      if (modalCardRef.current) {
-        if (isKbd) {
-          modalCardRef.current.style.height = `${currentHeight}px`;
-          modalCardRef.current.style.maxHeight = `${currentHeight}px`;
-          modalCardRef.current.style.transform = `translateY(${currentTop}px)`;
-        } else {
-          modalCardRef.current.style.height = "min(90dvh, 720px)";
-          modalCardRef.current.style.maxHeight = "100dvh";
-          modalCardRef.current.style.transform = "translateY(0px)";
-        }
-      }
-
-      if (modalOverlayRef.current) {
-        if (isKbd) {
-          modalOverlayRef.current.style.height = `${currentHeight}px`;
-          modalOverlayRef.current.style.top = `${currentTop}px`;
-        } else {
-          modalOverlayRef.current.style.height = "100%";
-          modalOverlayRef.current.style.top = "0px";
-        }
-      }
-
-      if (isKbd) {
-        window.scrollTo(0, 0);
-        setTimeout(() => {
-          inputRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-          scrollMessagesToBottom();
-        }, 60);
+    const handleViewportChange = () => {
+      const vp = window.visualViewport;
+      if (vp) {
+        const height = vp.height;
+        const screenH = window.innerHeight;
+        // Detect keyboard if visual viewport shrunk significantly relative to full window
+        const isKbd = height < screenH * 0.85;
+        
+        setViewportHeight(height);
+        setKeyboardOpen(isKbd);
+      } else {
+        setViewportHeight(window.innerHeight);
+        setKeyboardOpen(false);
       }
     };
 
-    updateViewport();
+    handleViewportChange();
 
     if (window.visualViewport) {
-      window.visualViewport.addEventListener("resize", updateViewport);
-      window.visualViewport.addEventListener("scroll", updateViewport);
+      window.visualViewport.addEventListener("resize", handleViewportChange);
+      window.visualViewport.addEventListener("scroll", handleViewportChange);
+    } else {
+      window.addEventListener("resize", handleViewportChange);
     }
-    window.addEventListener("resize", updateViewport);
 
     return () => {
       if (window.visualViewport) {
-        window.visualViewport.removeEventListener("resize", updateViewport);
-        window.visualViewport.removeEventListener("scroll", updateViewport);
+        window.visualViewport.removeEventListener("resize", handleViewportChange);
+        window.visualViewport.removeEventListener("scroll", handleViewportChange);
+      } else {
+        window.removeEventListener("resize", handleViewportChange);
       }
-      window.removeEventListener("resize", updateViewport);
     };
-  }, [scrollMessagesToBottom]);
+  }, []);
+
+  // Initial input focus (only once on mount)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 400);
+    return () => clearTimeout(timer);
+  }, []);
 
   const addAIMessage = (text) => {
     setMessages(prev => [...prev, {
@@ -418,123 +393,135 @@ ${compoundData ? `Context: User searched "${compoundData.searchName}" (${compoun
 
   return (
     <div
-      ref={modalOverlayRef}
       onClick={onClose}
       style={{
-        position:"fixed", top:0, bottom:0, left:0, right:0, zIndex:2000,
-        background:"rgba(0,0,0,0.85)",
-        backdropFilter:"blur(14px)",
-        WebkitBackdropFilter:"blur(14px)",
-        display:"flex", alignItems:"flex-end", justifyContent:"center",
-        animation:"fadeIn 0.2s ease",
+        position: "fixed",
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 2000,
+        background: "rgba(0,0,0,0.85)",
+        backdropFilter: "blur(14px)",
+        WebkitBackdropFilter: "blur(14px)",
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
+        animation: "fadeIn 0.2s ease",
+        height: viewportHeight ? `${viewportHeight}px` : "100dvh",
       }}
     >
       <div
-        ref={modalCardRef}
         onClick={e => e.stopPropagation()}
         style={{
-          width:"100%", maxWidth:500,
-          height: vpHeight ? `${vpHeight}px` : "min(90dvh, 720px)",
-          maxHeight: isKeyboardOpen ? `${vpHeight}px` : "100dvh",
-          background:"linear-gradient(170deg, #020b14 0%, #061527 40%, #0a1f38 75%, #050e1a 100%)",
-          borderRadius: isKeyboardOpen ? "0" : "26px 26px 0 0",
-          border:"1px solid rgba(0,229,255,0.22)",
-          borderBottom:"none",
-          display:"flex", flexDirection:"column",
-          overflow:"hidden",
-          animation: isKeyboardOpen ? "none" : "slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1)",
-          boxShadow:"0 -12px 60px rgba(0,229,255,0.25), 0 -4px 20px rgba(124,77,255,0.18)",
-          willChange:"height, transform",
-          transition:"border-radius 0.2s ease, height 0.1s ease-out",
+          width: "100%",
+          maxWidth: 500,
+          height: viewportHeight ? `${viewportHeight}px` : "min(90dvh, 720px)",
+          maxHeight: "100dvh",
+          background: "linear-gradient(170deg, #020b14 0%, #061527 40%, #0a1f38 75%, #050e1a 100%)",
+          borderRadius: keyboardOpen ? "0px" : "26px 26px 0 0",
+          border: "1px solid rgba(0,229,255,0.22)",
+          borderBottom: "none",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          animation: keyboardOpen ? "none" : "slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1)",
+          boxShadow: "0 -12px 60px rgba(0,229,255,0.25), 0 -4px 20px rgba(124,77,255,0.18)",
+          transition: "height 0.1s ease-out, border-radius 0.2s ease",
         }}
       >
 
         {/* Handle */}
-        {!isKeyboardOpen && (
-          <div style={{ display:"flex", justifyContent:"center", padding:"10px 0 2px", flexShrink:0 }}>
-            <div style={{ width:38, height:4, borderRadius:2, background:"rgba(255,255,255,0.15)" }} />
+        {!keyboardOpen && (
+          <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 2px", flexShrink: 0 }}>
+            <div style={{ width: 38, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.15)" }} />
           </div>
         )}
 
         {/* Header */}
         <div style={{
-          display:"flex", alignItems:"center", justifyContent:"space-between",
-          padding:"8px 16px 12px", flexShrink:0,
-          borderBottom:"1px solid rgba(0,229,255,0.12)",
-          background:"linear-gradient(90deg,rgba(0,229,255,0.08),rgba(124,77,255,0.08))",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "8px 16px 12px", flexShrink: 0,
+          borderBottom: "1px solid rgba(0,229,255,0.12)",
+          background: "linear-gradient(90deg,rgba(0,229,255,0.08),rgba(124,77,255,0.08))",
         }}>
-          <div style={{ display:"flex", alignItems:"center", gap:11 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
             <div style={{
-              width:40, height:40, borderRadius:13, flexShrink:0,
-              background:"linear-gradient(135deg,#00e5ff,#7c4dff)",
-              display:"flex", alignItems:"center", justifyContent:"center",
-              fontSize:19, animation:"aiGlow 2.5s ease-in-out infinite",
+              width: 40, height: 40, borderRadius: 13, flexShrink: 0,
+              background: "linear-gradient(135deg,#00e5ff,#7c4dff)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 19, animation: "aiGlow 2.5s ease-in-out infinite",
             }}>🧠</div>
             <div>
               <div style={{
-                fontSize:16, fontWeight:900, lineHeight:1.1,
-                background:"linear-gradient(90deg,#00e5ff,#7c4dff,#00bcd4,#00e5ff)",
-                backgroundSize:"250% auto",
-                WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent",
-                backgroundClip:"text",
-                animation:"aiTextFlow 3s linear infinite",
+                fontSize: 16, fontWeight: 900, lineHeight: 1.1,
+                background: "linear-gradient(90deg,#00e5ff,#7c4dff,#00bcd4,#00e5ff)",
+                backgroundSize: "250% auto",
+                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                animation: "aiTextFlow 3s linear infinite",
               }}>Chemix AI</div>
-              <div style={{ display:"flex", alignItems:"center", gap:5, marginTop:2 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
                 <div style={{
-                  width:6, height:6, borderRadius:"50%",
+                  width: 6, height: 6, borderRadius: "50%",
                   background: isOnline ? "#00e676" : "#ffb300",
                   boxShadow: isOnline ? "0 0 6px #00e676" : "0 0 6px #ffb300",
                 }} />
-                <span style={{ color:"rgba(255,255,255,0.45)", fontSize:10 }}>
+                <span style={{ color: "rgba(255,255,255,0.45)", fontSize: 10 }}>
                   {isOnline ? "Online · Chemistry Assistant" : "Offline Mode · Local Answers"}
                 </span>
               </div>
             </div>
           </div>
           <button onClick={onClose} style={{
-            background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)",
-            borderRadius:50, width:32, height:32, color:"rgba(255,255,255,0.65)",
-            cursor:"pointer", fontSize:17, display:"flex", alignItems:"center", justifyContent:"center",
+            background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: 50, width: 32, height: 32, color: "rgba(255,255,255,0.65)",
+            cursor: "pointer", fontSize: 17, display: "flex", alignItems: "center", justifyContent: "center",
           }}>×</button>
         </div>
 
         {/* Messages area */}
         <div style={{
-          flex:1, overflowY:"auto", padding:"12px 14px",
-          display:"flex", flexDirection:"column", gap:10,
-          scrollBehavior:"smooth", WebkitOverflowScrolling:"touch",
-          minHeight:0,
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+          padding: "12px 14px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+          scrollBehavior: "smooth",
+          WebkitOverflowScrolling: "touch",
         }}>
           {messages.map((msg, i) => (
             <div key={i} style={{
-              display:"flex",
+              display: "flex",
               flexDirection: msg.role === "user" ? "row-reverse" : "row",
-              alignItems:"flex-end", gap:7,
-              animation:"fadeUp 0.28s ease both",
+              alignItems: "flex-end", gap: 7,
+              animation: "fadeUp 0.28s ease both",
             }}>
               {msg.role === "ai" && (
                 <div style={{
-                  width:28, height:28, borderRadius:9, flexShrink:0,
-                  background:"linear-gradient(135deg,#00e5ff,#7c4dff)",
-                  display:"flex", alignItems:"center", justifyContent:"center",
-                  fontSize:13,
+                  width: 28, height: 28, borderRadius: 9, flexShrink: 0,
+                  background: "linear-gradient(135deg,#00e5ff,#7c4dff)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 13,
                 }}>🧠</div>
               )}
-              <div style={{ maxWidth:"80%", display:"flex", flexDirection:"column", alignItems: msg.role==="user" ? "flex-end" : "flex-start" }}>
+              <div style={{ maxWidth: "80%", display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start" }}>
                 <div style={{
-                  padding:"9px 13px",
-                  borderRadius: msg.role==="user" ? "17px 17px 4px 17px" : "17px 17px 17px 4px",
-                  background: msg.role==="user"
+                  padding: "9px 13px",
+                  borderRadius: msg.role === "user" ? "17px 17px 4px 17px" : "17px 17px 17px 4px",
+                  background: msg.role === "user"
                     ? "linear-gradient(135deg,#00c853,#00e676)"
                     : "rgba(255,255,255,0.055)",
-                  border: msg.role==="user" ? "none" : "1px solid rgba(0,229,255,0.12)",
-                  color: msg.role==="user" ? "#001a00" : "rgba(255,255,255,0.85)",
-                  fontSize:13, lineHeight:1.6,
-                  boxShadow: msg.role==="user"
+                  border: msg.role === "user" ? "none" : "1px solid rgba(0,229,255,0.12)",
+                  color: msg.role === "user" ? "#001a00" : "rgba(255,255,255,0.85)",
+                  fontSize: 13, lineHeight: 1.6,
+                  boxShadow: msg.role === "user"
                     ? "0 3px 12px rgba(0,200,83,0.22)"
                     : "0 2px 10px rgba(0,0,0,0.25)",
                 }} dangerouslySetInnerHTML={{ __html: formatText(msg.text) }} />
-                <span style={{ color:"rgba(255,255,255,0.2)", fontSize:9.5, marginTop:3, paddingLeft:2, paddingRight:2 }}>
+                <span style={{ color: "rgba(255,255,255,0.2)", fontSize: 9.5, marginTop: 3, paddingLeft: 2, paddingRight: 2 }}>
                   {msg.time}
                 </span>
               </div>
@@ -543,91 +530,124 @@ ${compoundData ? `Context: User searched "${compoundData.searchName}" (${compoun
 
           {/* Thinking dots */}
           {thinking && (
-            <div style={{ display:"flex", alignItems:"flex-end", gap:7, animation:"fadeUp 0.28s ease both" }}>
-              <div style={{ width:28, height:28, borderRadius:9, background:"linear-gradient(135deg,#00e5ff,#7c4dff)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13 }}>🧠</div>
-              <div style={{ padding:"12px 15px", borderRadius:"17px 17px 17px 4px", background:"rgba(255,255,255,0.055)", border:"1px solid rgba(0,229,255,0.12)", display:"flex", gap:5, alignItems:"center" }}>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 7, animation: "fadeUp 0.28s ease both" }}>
+              <div style={{ width: 28, height: 28, borderRadius: 9, background: "linear-gradient(135deg,#00e5ff,#7c4dff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>🧠</div>
+              <div style={{ padding: "12px 15px", borderRadius: "17px 17px 17px 4px", background: "rgba(255,255,255,0.055)", border: "1px solid rgba(0,229,255,0.12)", display: "flex", gap: 5, alignItems: "center" }}>
                 {[0,1,2].map(d => (
-                  <div key={d} style={{ width:6, height:6, borderRadius:"50%", background:"rgba(0,229,255,0.65)", animation:`thinkDot 1.2s ease-in-out ${d*0.2}s infinite` }} />
+                  <div key={d} style={{ width: 6, height: 6, borderRadius: "50%", background: "rgba(0,229,255,0.65)", animation: `thinkDot 1.2s ease-in-out ${d*0.2}s infinite` }} />
                 ))}
               </div>
             </div>
           )}
-          <div ref={messagesEndRef} style={{ height:1 }} />
+          <div ref={messagesEndRef} style={{ height: 1 }} />
         </div>
 
         {/* Quick prompts */}
-        <div style={{ padding:"6px 12px 2px", flexShrink:0 }}>
-          <div style={{ display:"flex", gap:6, overflowX:"auto", paddingBottom:4, msOverflowStyle:"none", scrollbarWidth:"none" }}>
-            {QUICK_PROMPTS.map(p => (
-              <button key={p} onClick={() => { setInput(p); setTimeout(() => inputRef.current?.focus(), 50); }} style={{
-                background:"rgba(0,229,255,0.06)", border:"1px solid rgba(0,229,255,0.18)",
-                borderRadius:20, padding:"5px 11px",
-                color:"rgba(0,229,255,0.82)", fontSize:11, fontWeight:600,
-                cursor:"pointer", whiteSpace:"nowrap", flexShrink:0, transition:"all 0.16s",
-              }}
-                onMouseEnter={e => e.currentTarget.style.background="rgba(0,229,255,0.14)"}
-                onMouseLeave={e => e.currentTarget.style.background="rgba(0,229,255,0.06)"}
-              >{p}</button>
-            ))}
+        {!keyboardOpen && (
+          <div style={{ padding: "6px 12px 2px", flexShrink: 0 }}>
+            <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, msOverflowStyle: "none", scrollbarWidth: "none" }}>
+              {QUICK_PROMPTS.map(p => (
+                <button key={p} onClick={() => { setInput(p); setTimeout(() => inputRef.current?.focus(), 50); }} style={{
+                  background: "rgba(0,229,255,0.06)", border: "1px solid rgba(0,229,255,0.18)",
+                  borderRadius: 20, padding: "5px 11px",
+                  color: "rgba(0,229,255,0.82)", fontSize: 11, fontWeight: 600,
+                  cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0, transition: "all 0.16s",
+                }}
+                  onMouseEnter={e => e.currentTarget.style.background = "rgba(0,229,255,0.14)"}
+                  onMouseLeave={e => e.currentTarget.style.background = "rgba(0,229,255,0.06)"}
+                >{p}</button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Input Container - Futuristic Cyan/Teal Glassmorphism */}
+        {/* Redesigned Chemistry-Themed Glassmorphism Input Composer */}
         <div style={{
-          padding:"8px 12px max(12px, env(safe-area-inset-bottom))",
-          flexShrink:0,
-          borderTop:"1px solid rgba(0,229,255,0.20)",
-          background:"linear-gradient(180deg, rgba(3, 16, 26, 0.92) 0%, rgba(2, 9, 18, 0.98) 100%)",
-          boxShadow:"0 -6px 24px rgba(0, 0, 0, 0.65)",
-          position:"relative",
-          zIndex:10,
+          padding: "8px 12px max(8px, env(safe-area-inset-bottom))",
+          flexShrink: 0,
+          borderTop: "1px solid rgba(0, 229, 255, 0.2)",
+          background: "linear-gradient(180deg, rgba(2, 13, 24, 0.95) 0%, rgba(1, 8, 16, 0.98) 100%)",
+          boxShadow: "0 -4px 20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(0,229,255,0.15)",
+          position: "relative",
+          zIndex: 10,
         }}>
           <div style={{
-            display:"flex", alignItems:"center", gap:10,
-            background:"rgba(5, 22, 36, 0.85)",
-            backdropFilter:"blur(16px)",
-            WebkitBackdropFilter:"blur(16px)",
-            border:"1.5px solid rgba(0,229,255,0.45)",
-            borderRadius:28, padding:"6px 8px 6px 14px",
-            boxShadow:"0 0 20px rgba(0,229,255,0.22), inset 0 1px 1px rgba(255,255,255,0.15)",
-            transition:"all 0.2s ease",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            background: isInputFocused
+              ? "rgba(6, 28, 48, 0.88)"
+              : "rgba(3, 18, 32, 0.75)",
+            backdropFilter: "blur(16px)",
+            WebkitBackdropFilter: "blur(16px)",
+            border: isInputFocused
+              ? "1.5px solid rgba(0, 229, 255, 0.85)"
+              : "1.5px solid rgba(0, 229, 255, 0.3)",
+            borderRadius: "24px",
+            padding: "6px 8px 6px 14px",
+            boxShadow: isInputFocused
+              ? "0 0 20px rgba(0, 229, 255, 0.35), inset 0 0 10px rgba(0, 229, 255, 0.12)"
+              : "0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.08)",
+            transition: "all 0.22s ease-in-out",
           }}>
-            <span style={{ fontSize:16, filter:"drop-shadow(0 0 5px rgba(0,229,255,0.8))", userSelect:"none" }}>⚗️</span>
+            <span style={{
+              fontSize: 18,
+              filter: isInputFocused
+                ? "drop-shadow(0 0 8px rgba(0,229,255,0.9))"
+                : "drop-shadow(0 0 3px rgba(0,229,255,0.3))",
+              transition: "all 0.2s ease",
+              userSelect: "none"
+            }}>⚗️</span>
             <input
               ref={inputRef}
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               onFocus={() => {
-                setTimeout(() => {
-                  inputRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-                  scrollMessagesToBottom();
-                }, 150);
+                setIsInputFocused(true);
+                setTimeout(scrollToBottom, 100);
               }}
-              placeholder="Ask about a molecule, reaction, element..."
-              style={{ flex:1, background:"transparent", border:"none", outline:"none", color:"#fff", fontSize:13.5, fontFamily:"inherit" }}
+              onBlur={() => setIsInputFocused(false)}
+              placeholder="Ask Chemix AI anything..."
+              style={{
+                flex: 1,
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                color: "#ffffff",
+                fontSize: 14,
+                fontFamily: "inherit",
+                letterSpacing: 0.2,
+                minWidth: 0,
+              }}
             />
             <button
               onClick={sendMessage}
               disabled={!input.trim() || thinking}
               style={{
-                width:38, height:38, borderRadius:50, flexShrink:0, border:"none",
+                width: 38,
+                height: 38,
+                borderRadius: "50%",
+                flexShrink: 0,
+                border: "none",
                 background: input.trim() && !thinking
-                  ? "linear-gradient(135deg,#00e5ff,#7c4dff)"
-                  : "rgba(255,255,255,0.07)",
+                  ? "linear-gradient(135deg, #00e5ff, #7c4dff)"
+                  : "rgba(255,255,255,0.08)",
                 cursor: input.trim() && !thinking ? "pointer" : "default",
-                display:"flex", alignItems:"center", justifyContent:"center",
-                transition:"all 0.2s ease",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "all 0.2s ease",
                 boxShadow: input.trim() && !thinking ? "0 0 16px rgba(0,229,255,0.45)" : "none",
               }}
             >
               {thinking
-                ? <div style={{ width:13, height:13, border:"2px solid rgba(255,255,255,0.4)", borderTopColor:"transparent", borderRadius:"50%", animation:"spin 0.7s linear infinite" }} />
+                ? <div style={{ width: 13, height: 13, border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
                 : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
               }
             </button>
           </div>
-          <div style={{ textAlign:"center", marginTop:6, color:"rgba(255,255,255,0.28)", fontSize:9.5, letterSpacing:0.2 }}>
+          <div style={{ textAlign: "center", marginTop: 5, color: "rgba(255,255,255,0.3)", fontSize: 9.5, letterSpacing: 0.2 }}>
             Chemix AI · {isOnline ? "Powered by Claude" : "Offline Mode — Local Chemistry Knowledge"}
           </div>
         </div>
@@ -640,54 +660,54 @@ ${compoundData ? `Context: User searched "${compoundData.searchName}" (${compoun
 // ABOUT MODAL
 // ─────────────────────────────────────────────
 const AboutModal = ({ onClose }) => (
-  <div onClick={onClose} style={{ position:"fixed", inset:0, zIndex:1000, background:"rgba(0,0,0,0.75)", backdropFilter:"blur(8px)", display:"flex", alignItems:"flex-end", justifyContent:"center", animation:"fadeIn 0.2s ease" }}>
-    <div onClick={e => e.stopPropagation()} style={{ width:"100%", maxWidth:480, background:"linear-gradient(160deg,#0d1f15 0%,#0a1625 100%)", borderRadius:"28px 28px 0 0", border:"1px solid rgba(74,222,128,0.25)", borderBottom:"none", padding:"0 0 40px", maxHeight:"88vh", overflowY:"auto", animation:"slideUp 0.32s cubic-bezier(0.4,0,0.2,1)" }}>
-      <div style={{ display:"flex", justifyContent:"center", padding:"12px 0 4px" }}>
-        <div style={{ width:42, height:4, borderRadius:2, background:"rgba(255,255,255,0.2)" }} />
+  <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)", display: "flex", alignItems: "flex-end", justifyContent: "center", animation: "fadeIn 0.2s ease" }}>
+    <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "linear-gradient(160deg,#0d1f15 0%,#0a1625 100%)", borderRadius: "28px 28px 0 0", border: "1px solid rgba(74,222,128,0.25)", borderBottom: "none", padding: "0 0 40px", maxHeight: "88vh", overflowY: "auto", animation: "slideUp 0.32s cubic-bezier(0.4,0,0.2,1)" }}>
+      <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}>
+        <div style={{ width: 42, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.2)" }} />
       </div>
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 22px 18px", borderBottom:"1px solid rgba(74,222,128,0.12)" }}>
-        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-          <img src={logo} alt="logo" style={{ width:40, height:40, borderRadius:12, objectFit:"cover", boxShadow:"0 0 14px rgba(74,222,128,0.4)" }} />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 22px 18px", borderBottom: "1px solid rgba(74,222,128,0.12)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <img src={logo} alt="logo" style={{ width: 40, height: 40, borderRadius: 12, objectFit: "cover", boxShadow: "0 0 14px rgba(74,222,128,0.4)" }} />
           <div>
-            <div style={{ fontSize:15, fontWeight:900 }}><span style={{ color:"#4ade80" }}>Chemix</span><span style={{ color:"#60a5fa" }}>Encyclopedia</span></div>
-            <div style={{ fontSize:10, color:"rgba(255,255,255,0.45)", marginTop:1 }}>by TimedCoder555</div>
+            <div style={{ fontSize: 15, fontWeight: 900 }}><span style={{ color: "#4ade80" }}>Chemix</span><span style={{ color: "#60a5fa" }}>Encyclopedia</span></div>
+            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.45)", marginTop: 1 }}>by TimedCoder555</div>
           </div>
         </div>
-        <button onClick={onClose} style={{ background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.15)", borderRadius:50, width:34, height:34, color:"#fff", cursor:"pointer", fontSize:18, display:"flex", alignItems:"center", justifyContent:"center" }}>×</button>
+        <button onClick={onClose} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 50, width: 34, height: 34, color: "#fff", cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
       </div>
-      <div style={{ padding:"20px 22px" }}>
-        <p style={{ color:"rgba(255,255,255,0.8)", fontSize:13.5, lineHeight:1.75, marginBottom:20 }}>
+      <div style={{ padding: "20px 22px" }}>
+        <p style={{ color: "rgba(255,255,255,0.8)", fontSize: 13.5, lineHeight: 1.75, marginBottom: 20 }}>
           Chemix Encyclopedia is a futuristic chemistry platform for students, researchers, and science lovers.
-          Explore <span style={{ color:"#4ade80", fontWeight:700 }}>100 Million+</span> compounds powered by PubChem.
+          Explore <span style={{ color: "#4ade80", fontWeight: 700 }}>100 Million+</span> compounds powered by PubChem.
         </p>
-        <div style={{ background:"rgba(74,222,128,0.07)", border:"1px solid rgba(74,222,128,0.18)", borderRadius:16, padding:"14px 16px", marginBottom:14 }}>
-          <div style={{ color:"#4ade80", fontWeight:800, fontSize:11.5, letterSpacing:0.8, marginBottom:10 }}>✨ FEATURES</div>
+        <div style={{ background: "rgba(74,222,128,0.07)", border: "1px solid rgba(74,222,128,0.18)", borderRadius: 16, padding: "14px 16px", marginBottom: 14 }}>
+          <div style={{ color: "#4ade80", fontWeight: 800, fontSize: 11.5, letterSpacing: 0.8, marginBottom: 10 }}>✨ FEATURES</div>
           {["100M+ Compound Database","Real-time PubChem Search","IUPAC + Common Name Detection","Molecular Weight Info","Chemix AI Assistant","Favorites System","Mobile Optimized","Futuristic Glassmorphism UI"].map(item => (
-            <div key={item} style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
-              <div style={{ width:5, height:5, borderRadius:"50%", background:"#4ade80", flexShrink:0 }} />
-              <span style={{ color:"rgba(255,255,255,0.72)", fontSize:12.5 }}>{item}</span>
+            <div key={item} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+              <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#4ade80", flexShrink: 0 }} />
+              <span style={{ color: "rgba(255,255,255,0.72)", fontSize: 12.5 }}>{item}</span>
             </div>
           ))}
         </div>
         {[
-          { color:"#60a5fa", label:"📚 BUILT FOR", text:"Students, chemistry enthusiasts, researchers, developers, and curious minds exploring the world of chemistry." },
-          { color:"#fbbf24", label:"🌿 VISION", text:"Making chemistry exploration simple, futuristic, and enjoyable for everyone." },
+          { color: "#60a5fa", label: "📚 BUILT FOR", text: "Students, chemistry enthusiasts, researchers, developers, and curious minds exploring the world of chemistry." },
+          { color: "#fbbf24", label: "🌿 VISION", text: "Making chemistry exploration simple, futuristic, and enjoyable for everyone." },
         ].map(sec => (
-          <div key={sec.label} style={{ background:`${sec.color}0e`, border:`1px solid ${sec.color}22`, borderRadius:16, padding:"14px 16px", marginBottom:14 }}>
-            <div style={{ color:sec.color, fontWeight:800, fontSize:11.5, letterSpacing:0.8, marginBottom:8 }}>{sec.label}</div>
-            <p style={{ color:"rgba(255,255,255,0.68)", fontSize:12.5, lineHeight:1.7 }}>{sec.text}</p>
+          <div key={sec.label} style={{ background: `${sec.color}0e`, border: `1px solid ${sec.color}22`, borderRadius: 16, padding: "14px 16px", marginBottom: 14 }}>
+            <div style={{ color: sec.color, fontWeight: 800, fontSize: 11.5, letterSpacing: 0.8, marginBottom: 8 }}>{sec.label}</div>
+            <p style={{ color: "rgba(255,255,255,0.68)", fontSize: 12.5, lineHeight: 1.7 }}>{sec.text}</p>
           </div>
         ))}
-        <div style={{ background:"rgba(167,139,250,0.08)", border:"1px solid rgba(167,139,250,0.18)", borderRadius:16, padding:"14px 16px", marginBottom:20 }}>
-          <div style={{ color:"#a78bfa", fontWeight:800, fontSize:11.5, letterSpacing:0.8, marginBottom:8 }}>⚡ TECHNOLOGY</div>
-          <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
+        <div style={{ background: "rgba(167,139,250,0.08)", border: "1px solid rgba(167,139,250,0.18)", borderRadius: 16, padding: "14px 16px", marginBottom: 20 }}>
+          <div style={{ color: "#a78bfa", fontWeight: 800, fontSize: 11.5, letterSpacing: 0.8, marginBottom: 8 }}>⚡ TECHNOLOGY</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
             {["React.js","PubChem API","Claude AI","Modern UI/UX","Responsive Design"].map(t => (
-              <span key={t} style={{ background:"rgba(167,139,250,0.14)", border:"1px solid rgba(167,139,250,0.25)", borderRadius:20, padding:"4px 12px", color:"#c4b5fd", fontSize:12, fontWeight:600 }}>{t}</span>
+              <span key={t} style={{ background: "rgba(167,139,250,0.14)", border: "1px solid rgba(167,139,250,0.25)", borderRadius: 20, padding: "4px 12px", color: "#c4b5fd", fontSize: 12, fontWeight: 600 }}>{t}</span>
             ))}
           </div>
         </div>
-        <div style={{ textAlign:"center", color:"rgba(255,255,255,0.45)", fontSize:13 }}>
-          Made with passion by <span style={{ color:"#4ade80", fontWeight:700 }}>TimedCoder555</span> 💚
+        <div style={{ textAlign: "center", color: "rgba(255,255,255,0.45)", fontSize: 13 }}>
+          Made with passion by <span style={{ color: "#4ade80", fontWeight: 700 }}>TimedCoder555</span> 💚
         </div>
       </div>
     </div>
@@ -699,34 +719,34 @@ const AboutModal = ({ onClose }) => (
 // ─────────────────────────────────────────────
 const ResultCard = ({ compoundData, isFav, onToggleFav }) => {
   const rows = [
-    { icon:"🏷️", label:"IUPAC NAME",      val: compoundData.IUPACName || compoundData.searchName || "Unknown", accent:"#00e5b0" },
-    { icon:"✨",  label:"COMMON NAME",     val: compoundData.commonName || "Not Available", accent:"#a78bfa", glow:true },
-    { icon:"⚗️", label:"FORMULA",          val: compoundData.MolecularFormula, accent:"#60a5fa" },
-    { icon:"⚖️", label:"MOLECULAR WEIGHT", val: `${compoundData.MolecularWeight} g/mol`, accent:"#fbbf24" },
+    { icon: "🏷️", label: "IUPAC NAME",      val: compoundData.IUPACName || compoundData.searchName || "Unknown", accent: "#00e5b0" },
+    { icon: "✨",  label: "COMMON NAME",     val: compoundData.commonName || "Not Available", accent: "#a78bfa", glow: true },
+    { icon: "⚗️", label: "FORMULA",          val: compoundData.MolecularFormula, accent: "#60a5fa" },
+    { icon: "⚖️", label: "MOLECULAR WEIGHT", val: `${compoundData.MolecularWeight} g/mol`, accent: "#fbbf24" },
   ];
   return (
-    <div style={{ marginBottom:18, background:"rgba(8,22,12,0.94)", borderRadius:22, overflow:"hidden", boxShadow:"0 8px 32px rgba(0,229,176,0.10),0 2px 8px rgba(0,0,0,0.4)", border:"1px solid rgba(0,229,176,0.18)", backdropFilter:"blur(20px)", animation:"slideDown 0.38s ease both" }}>
-      <div style={{ background:"linear-gradient(90deg,rgba(0,229,176,0.12),rgba(96,165,250,0.08))", padding:"13px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:"1px solid rgba(0,229,176,0.1)" }}>
-        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-          <div style={{ position:"relative", width:10, height:10 }}>
-            <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:"#00e5b0", animation:"pingDot 1.4s ease-in-out infinite", opacity:0.5 }} />
-            <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:"#00e5b0" }} />
+    <div style={{ marginBottom: 18, background: "rgba(8,22,12,0.94)", borderRadius: 22, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,229,176,0.10),0 2px 8px rgba(0,0,0,0.4)", border: "1px solid rgba(0,229,176,0.18)", backdropFilter: "blur(20px)", animation: "slideDown 0.38s ease both" }}>
+      <div style={{ background: "linear-gradient(90deg,rgba(0,229,176,0.12),rgba(96,165,250,0.08))", padding: "13px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(0,229,176,0.1)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ position: "relative", width: 10, height: 10 }}>
+            <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "#00e5b0", animation: "pingDot 1.4s ease-in-out infinite", opacity: 0.5 }} />
+            <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "#00e5b0" }} />
           </div>
-          <span style={{ color:"#00e5b0", fontWeight:800, fontSize:13, letterSpacing:0.5 }}>Compound Found</span>
-          <span style={{ background:"rgba(0,229,176,0.1)", border:"1px solid rgba(0,229,176,0.22)", borderRadius:20, padding:"2px 9px", color:"rgba(0,229,176,0.75)", fontSize:10, fontWeight:700 }}>PubChem</span>
+          <span style={{ color: "#00e5b0", fontWeight: 800, fontSize: 13, letterSpacing: 0.5 }}>Compound Found</span>
+          <span style={{ background: "rgba(0,229,176,0.1)", border: "1px solid rgba(0,229,176,0.22)", borderRadius: 20, padding: "2px 9px", color: "rgba(0,229,176,0.75)", fontSize: 10, fontWeight: 700 }}>PubChem</span>
         </div>
-        <button onClick={onToggleFav} style={{ width:40, height:40, borderRadius:12, border:"none", cursor:"pointer", background: isFav ? "linear-gradient(135deg,#4ade80,#22c55e)" : "rgba(255,255,255,0.07)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow: isFav ? "0 0 14px rgba(74,222,128,0.4)" : "none", transition:"all 0.22s" }}>
-          <span style={{ fontSize:18, lineHeight:1 }}>{isFav ? "★" : "☆"}</span>
+        <button onClick={onToggleFav} style={{ width: 40, height: 40, borderRadius: 12, border: "none", cursor: "pointer", background: isFav ? "linear-gradient(135deg,#4ade80,#22c55e)" : "rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: isFav ? "0 0 14px rgba(74,222,128,0.4)" : "none", transition: "all 0.22s" }}>
+          <span style={{ fontSize: 18, lineHeight: 1 }}>{isFav ? "★" : "☆"}</span>
         </button>
       </div>
       {rows.map((r, i) => (
-        <div key={r.label} style={{ display:"flex", alignItems:"flex-start", gap:13, padding:"12px 15px", borderBottom: i < rows.length-1 ? "1px solid rgba(255,255,255,0.04)" : "none", position:"relative", background: r.glow ? "rgba(167,139,250,0.04)" : "transparent" }}>
-          <div style={{ width:34, height:34, borderRadius:10, flexShrink:0, background:`${r.accent}15`, border:`1.5px solid ${r.accent}30`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:15, boxShadow: r.glow ? `0 0 10px ${r.accent}25` : "none" }}>{r.icon}</div>
-          <div style={{ flex:1, minWidth:0 }}>
-            <div style={{ color:r.accent, fontSize:9, fontWeight:800, letterSpacing:1, marginBottom:3, opacity:0.8 }}>{r.label}</div>
-            <div style={{ color: r.val==="Not Available" ? "rgba(255,255,255,0.3)" : "#fff", fontSize:13.5, fontWeight: r.val==="Not Available" ? 400 : 700, wordBreak:"break-all", lineHeight:1.4, fontStyle: r.val==="Not Available" ? "italic" : "normal" }}>{r.val}</div>
+        <div key={r.label} style={{ display: "flex", alignItems: "flex-start", gap: 13, padding: "12px 15px", borderBottom: i < rows.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none", position: "relative", background: r.glow ? "rgba(167,139,250,0.04)" : "transparent" }}>
+          <div style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, background: `${r.accent}15`, border: `1.5px solid ${r.accent}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, boxShadow: r.glow ? `0 0 10px ${r.accent}25` : "none" }}>{r.icon}</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ color: r.accent, fontSize: 9, fontWeight: 800, letterSpacing: 1, marginBottom: 3, opacity: 0.8 }}>{r.label}</div>
+            <div style={{ color: r.val === "Not Available" ? "rgba(255,255,255,0.3)" : "#fff", fontSize: 13.5, fontWeight: r.val === "Not Available" ? 400 : 700, wordBreak: "break-all", lineHeight: 1.4, fontStyle: r.val === "Not Available" ? "italic" : "normal" }}>{r.val}</div>
           </div>
-          <div style={{ position:"absolute", left:0, top:"20%", bottom:"20%", width:3, borderRadius:"0 2px 2px 0", background:r.accent, opacity:0.45 }} />
+          <div style={{ position: "absolute", left: 0, top: "20%", bottom: "20%", width: 3, borderRadius: "0 2px 2px 0", background: r.accent, opacity: 0.45 }} />
         </div>
       ))}
     </div>
@@ -829,7 +849,7 @@ const Main = () => {
   const toggleFav = () => isFav(compoundData) ? removeFav(compoundData.MolecularFormula) : addFav(compoundData);
 
   return (
-    <div style={{ minHeight:"100vh", background:"#eef2ee", fontFamily:"'Segoe UI',system-ui,sans-serif", overflowX:"hidden" }}>
+    <div style={{ minHeight: "100vh", background: "#eef2ee", fontFamily: "'Segoe UI',system-ui,sans-serif", overflowX: "hidden" }}>
 
       <style>{`
         *{box-sizing:border-box;margin:0;padding:0;}
@@ -882,25 +902,25 @@ const Main = () => {
       `}</style>
 
       {/* ══ NAVBAR ══ */}
-      <div style={{ background:"rgba(4,12,8,0.97)", backdropFilter:"blur(20px)", borderBottom:"1px solid rgba(74,222,128,0.12)", position:"sticky", top:0, zIndex:300 }}>
-        <div style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.05)", flexWrap:"wrap" }}>
-          <img src={logo} alt="logo" style={{ width:44, height:44, borderRadius:12, objectFit:"cover", boxShadow:"0 0 14px rgba(74,222,128,0.32)", flexShrink:0 }} />
-          <div style={{ flex:1, minWidth:0 }}>
-            <div style={{ fontSize:"clamp(14px,4vw,18px)", fontWeight:900, lineHeight:1.1, whiteSpace:"nowrap" }}>
-              <span style={{ color:"#00e5b0" }}>Chemix-</span><span style={{ color:"#00c4ff" }}>Encyclopedia</span>
+      <div style={{ background: "rgba(4,12,8,0.97)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(74,222,128,0.12)", position: "sticky", top: 0, zIndex: 300 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)", flexWrap: "wrap" }}>
+          <img src={logo} alt="logo" style={{ width: 44, height: 44, borderRadius: 12, objectFit: "cover", boxShadow: "0 0 14px rgba(74,222,128,0.32)", flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: "clamp(14px,4vw,18px)", fontWeight: 900, lineHeight: 1.1, whiteSpace: "nowrap" }}>
+              <span style={{ color: "#00e5b0" }}>Chemix-</span><span style={{ color: "#00c4ff" }}>Encyclopedia</span>
             </div>
-            <div style={{ fontSize:11.5, marginTop:3 }}>by <span className="rainbow-text">Timedcoder</span></div>
+            <div style={{ fontSize: 11.5, marginTop: 3 }}>by <span className="rainbow-text">Timedcoder</span></div>
           </div>
-          <button className="report-btn" onClick={() => window.open("https://github.com/TimedCoder555/Chemix-Encyclopedia/issues","_blank")} style={{ flexShrink:0, display:"flex", alignItems:"center", gap:7, background:"linear-gradient(135deg,#180808,#2a0e0e)", border:"1.5px solid rgba(255,80,80,0.45)", borderRadius:13, padding:"7px 12px", cursor:"pointer" }}>
-            <span style={{ fontSize:16, lineHeight:1 }}>🐛</span>
-            <div><div style={{ color:"#ff6b6b", fontSize:10.5, fontWeight:800, letterSpacing:0.4, lineHeight:1.1 }}>REPORT HERE</div><div style={{ color:"rgba(255,107,107,0.55)", fontSize:9, lineHeight:1.1 }}>Bugs &amp; issues</div></div>
+          <button className="report-btn" onClick={() => window.open("https://github.com/TimedCoder555/Chemix-Encyclopedia/issues","_blank")} style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 7, background: "linear-gradient(135deg,#180808,#2a0e0e)", border: "1.5px solid rgba(255,80,80,0.45)", borderRadius: 13, padding: "7px 12px", cursor: "pointer" }}>
+            <span style={{ fontSize: 16, lineHeight: 1 }}>🐛</span>
+            <div><div style={{ color: "#ff6b6b", fontSize: 10.5, fontWeight: 800, letterSpacing: 0.4, lineHeight: 1.1 }}>REPORT HERE</div><div style={{ color: "rgba(255,107,107,0.55)", fontSize: 9, lineHeight: 1.1 }}>Bugs &amp; issues</div></div>
           </button>
         </div>
-        <div style={{ display:"flex" }}>
+        <div style={{ display: "flex" }}>
           {[{id:"home",label:"HOME"},{id:"elements",label:"ELEMENTS"},{id:"molecules",label:"MOLECULES"},{id:"about",label:"ABOUT"}].map(link => {
             const active = link.id !== "about" && navPage === link.id;
             return (
-              <button key={link.id} className="nav-lnk" onClick={() => { if(link.id==="about"){setShowAbout(true);return;} setNavPage(link.id);setActiveTab("home"); }} style={{ flex:1, background:"none", border:"none", color: active?"#00e5b0":"rgba(255,255,255,0.52)", fontSize:10.5, fontWeight:800, letterSpacing:0.6, padding:"9px 4px", borderBottom: active?"2.5px solid #00e5b0":"2.5px solid transparent", cursor:"pointer", transition:"all 0.18s" }}>
+              <button key={link.id} className="nav-lnk" onClick={() => { if(link.id==="about"){setShowAbout(true);return;} setNavPage(link.id);setActiveTab("home"); }} style={{ flex: 1, background: "none", border: "none", color: active?"#00e5b0":"rgba(255,255,255,0.52)", fontSize: 10.5, fontWeight: 800, letterSpacing: 0.6, padding: "9px 4px", borderBottom: active?"2.5px solid #00e5b0":"2.5px solid transparent", cursor: "pointer", transition: "all 0.18s" }}>
                 {link.label}
               </button>
             );
@@ -909,17 +929,17 @@ const Main = () => {
       </div>
 
       {/* ══ HERO ══ */}
-      <div style={{ position:"relative", minHeight:400, backgroundImage:`url(${heroBg})`, backgroundSize:"cover", backgroundPosition:"center", display:"flex", flexDirection:"column" }}>
-        <div style={{ position:"absolute", inset:0, background:"linear-gradient(180deg,rgba(2,10,5,0.52) 0%,rgba(10,30,18,0.45) 55%,rgba(25,55,35,0.78) 100%)" }} />
-        <div style={{ position:"relative", zIndex:5, flex:1, display:"flex", flexDirection:"column", justifyContent:"center", padding:"32px 22px 56px", animation:"fadeUp 0.7s ease both" }}>
-          <h1 style={{ fontSize:"clamp(26px,8vw,42px)", fontWeight:900, color:"#fff", lineHeight:1.15, letterSpacing:-0.5, marginBottom:12, textShadow:"0 2px 24px rgba(0,0,0,0.5)" }}>
-            "Chemistry is the<br/><span style={{ color:"#86efac" }}>poetry</span> of<br/>invisible molecules."
+      <div style={{ position: "relative", minHeight: 400, backgroundImage: `url(${heroBg})`, backgroundSize: "cover", backgroundPosition: "center", display: "flex", flexDirection: "column" }}>
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,rgba(2,10,5,0.52) 0%,rgba(10,30,18,0.45) 55%,rgba(25,55,35,0.78) 100%)" }} />
+        <div style={{ position: "relative", zIndex: 5, flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "32px 22px 56px", animation: "fadeUp 0.7s ease both" }}>
+          <h1 style={{ fontSize: "clamp(26px,8vw,42px)", fontWeight: 900, color: "#fff", lineHeight: 1.15, letterSpacing: -0.5, marginBottom: 12, textShadow: "0 2px 24px rgba(0,0,0,0.5)" }}>
+            "Chemistry is the<br/><span style={{ color: "#86efac" }}>poetry</span> of<br/>invisible molecules."
           </h1>
-          <p style={{ color:"rgba(255,255,255,0.7)", fontSize:14, lineHeight:1.7, maxWidth:320 }}>
+          <p style={{ color: "rgba(255,255,255,0.7)", fontSize: 14, lineHeight: 1.7, maxWidth: 320 }}>
             Explore compounds, elements, reactions and molecular structures.
           </p>
         </div>
-        <div style={{ position:"absolute", bottom:-1, left:0, right:0, zIndex:5 }}>
+        <div style={{ position: "absolute", bottom: -1, left: 0, right: 0, zIndex: 5 }}>
           <svg viewBox="0 0 414 56" width="100%" height="56" preserveAspectRatio="none">
             <path d="M0,0 C60,40 140,5 220,32 C290,54 360,12 414,38 L414,56 L0,56 Z" fill="#eef2ee"/>
           </svg>
@@ -927,30 +947,30 @@ const Main = () => {
       </div>
 
       {/* ══ SEARCH BAR ══ */}
-      <div style={{ position:"sticky", top:88, zIndex:100, background:"rgba(238,242,238,0.97)", backdropFilter:"blur(16px)", borderBottom:"1px solid rgba(0,0,0,0.06)", padding:"9px 13px", display:"flex", alignItems:"center", gap:9 }}>
-        <div className="search-box" style={{ flex:1, display:"flex", alignItems:"center", gap:8, background:"#273329", border:"1.5px solid rgba(74,222,128,0.22)", borderRadius:50, padding:"10px 13px", transition:"all 0.22s" }}>
+      <div style={{ position: "sticky", top: 88, zIndex: 100, background: "rgba(238,242,238,0.97)", backdropFilter: "blur(16px)", borderBottom: "1px solid rgba(0,0,0,0.06)", padding: "9px 13px", display: "flex", alignItems: "center", gap: 9 }}>
+        <div className="search-box" style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, background: "#273329", border: "1.5px solid rgba(74,222,128,0.22)", borderRadius: 50, padding: "10px 13px", transition: "all 0.22s" }}>
           {loading
-            ? <div style={{ width:13, height:13, border:"2px solid #4ade80", borderTopColor:"transparent", borderRadius:"50%", animation:"spin 0.7s linear infinite", flexShrink:0 }} />
-            : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink:0 }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            ? <div style={{ width: 13, height: 13, border: "2px solid #4ade80", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite", flexShrink: 0 }} />
+            : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0 }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           }
           <input
             type="text" value={value}
             onChange={e => setValue(e.target.value)}
             onKeyDown={e => e.key==="Enter" && handleSearch()}
             placeholder="Search: H2O, CO2, NaCl, glucose..."
-            style={{ flex:1, background:"transparent", border:"none", color:"#fff", fontSize:13, fontFamily:"inherit", minWidth:0 }}
+            style={{ flex: 1, background: "transparent", border: "none", color: "#fff", fontSize: 13, fontFamily: "inherit", minWidth: 0 }}
           />
-          {value && <button onClick={()=>{setValue("");setCompound(null);setErrorMsg("");}} style={{ background:"none", border:"none", color:"rgba(255,255,255,0.45)", cursor:"pointer", fontSize:17, padding:0, lineHeight:1 }}>×</button>}
+          {value && <button onClick={()=>{setValue("");setCompound(null);setErrorMsg("");}} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.45)", cursor: "pointer", fontSize: 17, padding: 0, lineHeight: 1 }}>×</button>}
         </div>
-        <button onClick={()=>setActiveTab(activeTab==="favorites"?"home":"favorites")} style={{ flexShrink:0, background: activeTab==="favorites"?"#4ade80":"#273329", border:"1.5px solid rgba(74,222,128,0.28)", borderRadius:50, padding:"9px 13px", color: activeTab==="favorites"?"#0a2010":"rgba(255,255,255,0.78)", fontSize:12, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", gap:5, transition:"all 0.2s", whiteSpace:"nowrap" }}>
-          ⭐{favorites.length>0 && <span style={{ background: activeTab==="favorites"?"#0a2010":"#4ade80", color: activeTab==="favorites"?"#4ade80":"#0a2010", borderRadius:10, padding:"1px 5px", fontSize:9.5, fontWeight:800 }}>{favorites.length}</span>}
+        <button onClick={()=>setActiveTab(activeTab==="favorites"?"home":"favorites")} style={{ flexShrink: 0, background: activeTab==="favorites"?"#4ade80":"#273329", border: "1.5px solid rgba(74,222,128,0.28)", borderRadius: 50, padding: "9px 13px", color: activeTab==="favorites"?"#0a2010":"rgba(255,255,255,0.78)", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, transition: "all 0.2s", whiteSpace: "nowrap" }}>
+          ⭐{favorites.length>0 && <span style={{ background: activeTab==="favorites"?"#0a2010":"#4ade80", color: activeTab==="favorites"?"#4ade80":"#0a2010", borderRadius: 10, padding: "1px 5px", fontSize: 9.5, fontWeight: 800 }}>{favorites.length}</span>}
         </button>
       </div>
 
       {/* ══ CONTENT ══ */}
-      <div className="content-pad" style={{ padding:"13px 14px 100px", maxWidth:520, margin:"0 auto" }}>
+      <div className="content-pad" style={{ padding: "13px 14px 100px", maxWidth: 520, margin: "0 auto" }}>
         {errorMsg && (
-          <div style={{ marginBottom:12, color:"#ef4444", fontSize:13, fontWeight:600, background:"rgba(239,68,68,0.07)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:12, padding:"10px 14px", animation:"fadeIn 0.3s ease" }}>
+          <div style={{ marginBottom: 12, color: "#ef4444", fontSize: 13, fontWeight: 600, background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 12, padding: "10px 14px", animation: "fadeIn 0.3s ease" }}>
             {errorMsg}
           </div>
         )}
@@ -959,17 +979,17 @@ const Main = () => {
         {activeTab==="home" && navPage==="home" && (
           <>
             {compoundData && <ResultCard compoundData={compoundData} isFav={isFav(compoundData)} onToggleFav={toggleFav} />}
-            <p style={{ color:"#7a8e7a", fontSize:10, fontWeight:700, letterSpacing:0.8, marginBottom:8 }}>QUICK SEARCH</p>
-            <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:16 }}>
+            <p style={{ color: "#7a8e7a", fontSize: 10, fontWeight: 700, letterSpacing: 0.8, marginBottom: 8 }}>QUICK SEARCH</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
               {[{label:"H₂O",q:"water"},{label:"CO₂",q:"carbon dioxide"},{label:"NaCl",q:"sodium chloride"},{label:"NH₃",q:"ammonia"},{label:"C₆H₁₂O₆",q:"glucose"},{label:"CH₄",q:"methane"},{label:"C₂H₅OH",q:"ethanol"}].map(({label,q})=>(
-                <button key={label} className="chip" onClick={()=>{setValue(q);handleSearch(q);}} style={{ background:"rgba(45,90,61,0.09)", border:"1.5px solid rgba(45,90,61,0.17)", borderRadius:20, padding:"5px 11px", color:"#1a4a2a", fontSize:11.5, fontWeight:700, cursor:"pointer", fontFamily:"monospace", transition:"all 0.2s" }}>{label}</button>
+                <button key={label} className="chip" onClick={()=>{setValue(q);handleSearch(q);}} style={{ background: "rgba(45,90,61,0.09)", border: "1.5px solid rgba(45,90,61,0.17)", borderRadius: 20, padding: "5px 11px", color: "#1a4a2a", fontSize: 11.5, fontWeight: 700, cursor: "pointer", fontFamily: "monospace", transition: "all 0.2s" }}>{label}</button>
               ))}
             </div>
             {!compoundData && (
-              <div style={{ background:"#fff", borderRadius:20, padding:"26px 16px", textAlign:"center", boxShadow:"0 2px 10px rgba(0,0,0,0.05)" }}>
-                <div style={{ fontSize:34, marginBottom:9 }}>⚗️</div>
-                <div style={{ color:"#1a4a2a", fontWeight:800, fontSize:14, marginBottom:5 }}>Start exploring</div>
-                <div style={{ color:"#9ca3af", fontSize:12.5, lineHeight:1.65 }}>Type any compound name or formula and press Enter. Try: water, CO2, NaCl, glucose.</div>
+              <div style={{ background: "#fff", borderRadius: 20, padding: "26px 16px", textAlign: "center", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+                <div style={{ fontSize: 34, marginBottom: 9 }}>⚗️</div>
+                <div style={{ color: "#1a4a2a", fontWeight: 800, fontSize: 14, marginBottom: 5 }}>Start exploring</div>
+                <div style={{ color: "#9ca3af", fontSize: 12.5, lineHeight: 1.65 }}>Type any compound name or formula and press Enter. Try: water, CO2, NaCl, glucose.</div>
               </div>
             )}
           </>
@@ -977,17 +997,17 @@ const Main = () => {
 
         {/* ELEMENTS */}
         {activeTab==="home" && navPage==="elements" && (
-          <div style={{ animation:"fadeUp 0.4s ease both" }}>
-            <div style={{ background:"#fff", borderRadius:20, padding:"20px 16px", textAlign:"center", boxShadow:"0 2px 10px rgba(0,0,0,0.05)", marginBottom:12 }}>
-              <div style={{ fontSize:36, marginBottom:7 }}>🔬</div>
-              <div style={{ color:"#1a4a2a", fontWeight:800, fontSize:14, marginBottom:5 }}>Elements</div>
-              <p style={{ color:"#9ca3af", fontSize:12.5, lineHeight:1.6 }}>Tap any element to search it instantly.</p>
+          <div style={{ animation: "fadeUp 0.4s ease both" }}>
+            <div style={{ background: "#fff", borderRadius: 20, padding: "20px 16px", textAlign: "center", boxShadow: "0 2px 10px rgba(0,0,0,0.05)", marginBottom: 12 }}>
+              <div style={{ fontSize: 36, marginBottom: 7 }}>🔬</div>
+              <div style={{ color: "#1a4a2a", fontWeight: 800, fontSize: 14, marginBottom: 5 }}>Elements</div>
+              <p style={{ color: "#9ca3af", fontSize: 12.5, lineHeight: 1.6 }}>Tap any element to search it instantly.</p>
             </div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:9 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 9 }}>
               {[{symbol:"H",name:"Hydrogen",num:1,color:"#60a5fa"},{symbol:"O",name:"Oxygen",num:8,color:"#f87171"},{symbol:"C",name:"Carbon",num:6,color:"#a78bfa"},{symbol:"N",name:"Nitrogen",num:7,color:"#4ade80"},{symbol:"Na",name:"Sodium",num:11,color:"#fbbf24"},{symbol:"Fe",name:"Iron",num:26,color:"#fb923c"},{symbol:"Au",name:"Gold",num:79,color:"#f59e0b"},{symbol:"Ag",name:"Silver",num:47,color:"#94a3b8"}].map(el=>(
-                <button key={el.symbol} className="el-card" onClick={()=>{setValue(el.name);handleSearch(el.name);setNavPage("home");}} style={{ background:"#fff", border:`2px solid ${el.color}28`, borderRadius:15, padding:"12px 11px", display:"flex", alignItems:"center", gap:10, cursor:"pointer", textAlign:"left", boxShadow:"0 2px 8px rgba(0,0,0,0.05)" }}>
-                  <div style={{ width:44, height:44, borderRadius:12, flexShrink:0, background:`${el.color}15`, border:`2px solid ${el.color}38`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, fontWeight:900, color:el.color }}>{el.symbol}</div>
-                  <div><div style={{ color:"#1a2e1a", fontWeight:700, fontSize:12.5 }}>{el.name}</div><div style={{ color:"#9ca3af", fontSize:10.5, marginTop:2 }}>Atomic № {el.num}</div></div>
+                <button key={el.symbol} className="el-card" onClick={()=>{setValue(el.name);handleSearch(el.name);setNavPage("home");}} style={{ background: "#fff", border: `2px solid ${el.color}28`, borderRadius: 15, padding: "12px 11px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", textAlign: "left", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, flexShrink: 0, background: `${el.color}15`, border: `2px solid ${el.color}38`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 900, color: el.color }}>{el.symbol}</div>
+                  <div><div style={{ color: "#1a2e1a", fontWeight: 700, fontSize: 12.5 }}>{el.name}</div><div style={{ color: "#9ca3af", fontSize: 10.5, marginTop: 2 }}>Atomic № {el.num}</div></div>
                 </button>
               ))}
             </div>
@@ -996,17 +1016,17 @@ const Main = () => {
 
         {/* MOLECULES */}
         {activeTab==="home" && navPage==="molecules" && (
-          <div style={{ animation:"fadeUp 0.4s ease both" }}>
-            <div style={{ background:"#fff", borderRadius:20, padding:"20px 16px", textAlign:"center", boxShadow:"0 2px 10px rgba(0,0,0,0.05)", marginBottom:12 }}>
-              <div style={{ fontSize:36, marginBottom:7 }}>🧪</div>
-              <div style={{ color:"#1a4a2a", fontWeight:800, fontSize:14, marginBottom:5 }}>Molecules</div>
-              <p style={{ color:"#9ca3af", fontSize:12.5, lineHeight:1.6 }}>Tap any molecule to search instantly.</p>
+          <div style={{ animation: "fadeUp 0.4s ease both" }}>
+            <div style={{ background: "#fff", borderRadius: 20, padding: "20px 16px", textAlign: "center", boxShadow: "0 2px 10px rgba(0,0,0,0.05)", marginBottom: 12 }}>
+              <div style={{ fontSize: 36, marginBottom: 7 }}>🧪</div>
+              <div style={{ color: "#1a4a2a", fontWeight: 800, fontSize: 14, marginBottom: 5 }}>Molecules</div>
+              <p style={{ color: "#9ca3af", fontSize: 12.5, lineHeight: 1.6 }}>Tap any molecule to search instantly.</p>
             </div>
-            <div style={{ display:"flex", flexDirection:"column", gap:9 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
               {[{formula:"H₂O",name:"Water",desc:"Universal solvent of life",q:"water",color:"#60a5fa"},{formula:"CO₂",name:"Carbon Dioxide",desc:"Greenhouse gas, photosynthesis fuel",q:"carbon dioxide",color:"#f87171"},{formula:"NH₃",name:"Ammonia",desc:"Key nitrogen compound in fertilizers",q:"ammonia",color:"#4ade80"},{formula:"CH₄",name:"Methane",desc:"Simplest hydrocarbon, natural gas",q:"methane",color:"#fbbf24"},{formula:"C₆H₁₂O₆",name:"Glucose",desc:"Primary energy source for cells",q:"glucose",color:"#fb923c"},{formula:"C₂H₅OH",name:"Ethanol",desc:"Alcohol used in beverages & fuel",q:"ethanol",color:"#a78bfa"},{formula:"NaCl",name:"Sodium Chloride",desc:"Common table salt, ionic bond",q:"sodium chloride",color:"#34d399"}].map(mol=>(
-                <button key={mol.formula} className="mol-card" onClick={()=>{setValue(mol.q);handleSearch(mol.q);setNavPage("home");}} style={{ background:"#fff", border:`2px solid ${mol.color}25`, borderRadius:15, padding:"12px 13px", display:"flex", alignItems:"center", gap:12, cursor:"pointer", textAlign:"left", boxShadow:"0 2px 8px rgba(0,0,0,0.05)" }}>
-                  <div style={{ width:50, height:50, borderRadius:13, flexShrink:0, background:`${mol.color}12`, border:`2px solid ${mol.color}35`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:900, color:mol.color, fontFamily:"monospace", textAlign:"center", padding:2 }}>{mol.formula}</div>
-                  <div><div style={{ color:"#1a2e1a", fontWeight:700, fontSize:13 }}>{mol.name}</div><div style={{ color:"#9ca3af", fontSize:11.5, marginTop:2 }}>{mol.desc}</div></div>
+                <button key={mol.formula} className="mol-card" onClick={()=>{setValue(mol.q);handleSearch(mol.q);setNavPage("home");}} style={{ background: "#fff", border: `2px solid ${mol.color}25`, borderRadius: 15, padding: "12px 13px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", textAlign: "left", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+                  <div style={{ width: 50, height: 50, borderRadius: 13, flexShrink: 0, background: `${mol.color}12`, border: `2px solid ${mol.color}35`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 900, color: mol.color, fontFamily: "monospace", textAlign: "center", padding: 2 }}>{mol.formula}</div>
+                  <div><div style={{ color: "#1a2e1a", fontWeight: 700, fontSize: 13 }}>{mol.name}</div><div style={{ color: "#9ca3af", fontSize: 11.5, marginTop: 2 }}>{mol.desc}</div></div>
                 </button>
               ))}
             </div>
@@ -1015,30 +1035,30 @@ const Main = () => {
 
         {/* FAVORITES */}
         {activeTab==="favorites" && (
-          <div style={{ animation:"fadeUp 0.3s ease both" }}>
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:11 }}>
-              <p style={{ color:"#7a8e7a", fontSize:10, fontWeight:700, letterSpacing:0.8 }}>SAVED ({favorites.length})</p>
-              {favorites.length>0 && <button onClick={()=>setFavorites([])} style={{ background:"none", border:"none", color:"#ef4444", fontSize:11, fontWeight:700, cursor:"pointer" }}>Clear all</button>}
+          <div style={{ animation: "fadeUp 0.3s ease both" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 11 }}>
+              <p style={{ color: "#7a8e7a", fontSize: 10, fontWeight: 700, letterSpacing: 0.8 }}>SAVED ({favorites.length})</p>
+              {favorites.length>0 && <button onClick={()=>setFavorites([])} style={{ background: "none", border: "none", color: "#ef4444", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>Clear all</button>}
             </div>
             {favorites.length===0 ? (
-              <div style={{ background:"#fff", borderRadius:20, padding:"34px 16px", textAlign:"center", boxShadow:"0 2px 10px rgba(0,0,0,0.05)" }}>
-                <div style={{ fontSize:34, marginBottom:9 }}>⭐</div>
-                <div style={{ color:"#1a4a2a", fontWeight:800, fontSize:14, marginBottom:5 }}>No favorites yet</div>
-                <div style={{ color:"#9ca3af", fontSize:12.5, lineHeight:1.6 }}>Search a compound and tap ☆ to save here.</div>
+              <div style={{ background: "#fff", borderRadius: 20, padding: "34px 16px", textAlign: "center", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+                <div style={{ fontSize: 34, marginBottom: 9 }}>⭐</div>
+                <div style={{ color: "#1a4a2a", fontWeight: 800, fontSize: 14, marginBottom: 5 }}>No favorites yet</div>
+                <div style={{ color: "#9ca3af", fontSize: 12.5, lineHeight: 1.6 }}>Search a compound and tap ☆ to save here.</div>
               </div>
             ) : (
-              <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {favorites.map((fav,idx)=>(
-                  <div key={fav.MolecularFormula} className="fav-card" style={{ background:CARD_GRADS[idx%CARD_GRADS.length], borderRadius:20, boxShadow:"0 4px 16px rgba(0,0,0,0.14)", animation:"fadeUp 0.35s ease both" }}>
-                    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 14px" }}>
-                      <div style={{ flex:1, minWidth:0 }}>
-                        <div style={{ fontSize:19, fontWeight:900, color:"#fff", marginBottom:2 }}>{fav.MolecularFormula}</div>
-                        {fav.commonName && fav.commonName!=="Not Available" && <div style={{ color:"#a78bfa", fontSize:11, fontWeight:600, marginBottom:2 }}>✨ {fav.commonName}</div>}
-                        <div style={{ color:"rgba(255,255,255,0.6)", fontSize:11, marginBottom:5, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", maxWidth:"90%" }}>{fav.IUPACName||fav.searchName||"Unknown"}</div>
-                        <span style={{ background:"rgba(255,255,255,0.12)", borderRadius:10, padding:"2px 9px", color:"rgba(255,255,255,0.8)", fontSize:10.5, fontWeight:600 }}>{fav.MolecularWeight} g/mol</span>
+                  <div key={fav.MolecularFormula} className="fav-card" style={{ background: CARD_GRADS[idx%CARD_GRADS.length], borderRadius: 20, boxShadow: "0 4px 16px rgba(0,0,0,0.14)", animation: "fadeUp 0.35s ease both" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 14px" }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 19, fontWeight: 900, color: "#fff", marginBottom: 2 }}>{fav.MolecularFormula}</div>
+                        {fav.commonName && fav.commonName!=="Not Available" && <div style={{ color: "#a78bfa", fontSize: 11, fontWeight: 600, marginBottom: 2 }}>✨ {fav.commonName}</div>}
+                        <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 11, marginBottom: 5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "90%" }}>{fav.IUPACName||fav.searchName||"Unknown"}</div>
+                        <span style={{ background: "rgba(255,255,255,0.12)", borderRadius: 10, padding: "2px 9px", color: "rgba(255,255,255,0.8)", fontSize: 10.5, fontWeight: 600 }}>{fav.MolecularWeight} g/mol</span>
                       </div>
-                      <button className="plus-btn" onClick={()=>removeFav(fav.MolecularFormula)} style={{ width:50, height:50, borderRadius:14, flexShrink:0, marginLeft:11, background:"rgba(255,255,255,0.86)", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 14px rgba(0,0,0,0.2)" }}>
-                        <span style={{ fontSize:25, color:"#1a3d2b", lineHeight:1, fontWeight:300 }}>−</span>
+                      <button className="plus-btn" onClick={()=>removeFav(fav.MolecularFormula)} style={{ width: 50, height: 50, borderRadius: 14, flexShrink: 0, marginLeft: 11, background: "rgba(255,255,255,0.86)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 14px rgba(0,0,0,0.2)" }}>
+                        <span style={{ fontSize: 25, color: "#1a3d2b", lineHeight: 1, fontWeight: 300 }}>−</span>
                       </button>
                     </div>
                   </div>
@@ -1049,31 +1069,30 @@ const Main = () => {
         )}
       </div>
 
-      {/* ══ FLOATING AI BUTTON ══
-          Positioned LEFT side to avoid overlap with content on right */}
+      {/* ══ FLOATING AI BUTTON ══ */}
       <button
         className="ai-fab"
         onClick={() => setShowAI(true)}
         style={{
-          position:"fixed",
-          bottom:24, right:18,   /* right side, above safe area */
-          zIndex:400,
-          width:58, height:58,
-          borderRadius:"50%",
-          border:"2px solid rgba(0,229,255,0.45)",
-          background:"linear-gradient(145deg,#001828,#08001e)",
-          cursor:"pointer",
-          display:"flex", alignItems:"center", justifyContent:"center",
-          fontSize:24,
+          position: "fixed",
+          bottom: 24, right: 18,
+          zIndex: 400,
+          width: 58, height: 58,
+          borderRadius: "50%",
+          border: "2px solid rgba(0,229,255,0.45)",
+          background: "linear-gradient(145deg,#001828,#08001e)",
+          cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 24,
         }}
         title="Chemix AI Assistant"
         aria-label="Open Chemix AI"
       >
         🧠
         {/* Outer ring */}
-        <div style={{ position:"absolute", inset:-5, borderRadius:"50%", border:"1px solid rgba(0,229,255,0.18)", pointerEvents:"none" }} />
+        <div style={{ position: "absolute", inset: -5, borderRadius: "50%", border: "1px solid rgba(0,229,255,0.18)", pointerEvents: "none" }} />
         {/* AI badge */}
-        <div style={{ position:"absolute", top:-6, left:"50%", transform:"translateX(-50%)", background:"linear-gradient(90deg,#00e5ff,#7c4dff)", borderRadius:20, padding:"1.5px 7px", color:"#fff", fontSize:8, fontWeight:800, letterSpacing:0.5, whiteSpace:"nowrap", boxShadow:"0 2px 7px rgba(0,229,255,0.38)" }}>AI</div>
+        <div style={{ position: "absolute", top: -6, left: "50%", transform: "translateX(-50%)", background: "linear-gradient(90deg,#00e5ff,#7c4dff)", borderRadius: 20, padding: "1.5px 7px", color: "#fff", fontSize: 8, fontWeight: 800, letterSpacing: 0.5, whiteSpace: "nowrap", boxShadow: "0 2px 7px rgba(0,229,255,0.38)" }}>AI</div>
       </button>
 
       {/* MODALS */}
